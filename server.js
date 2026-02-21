@@ -149,7 +149,13 @@ io.on("connection", (socket) => {
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
 });
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
 app.get('/:roomCode', (req, res) => {
     const { roomCode } = req.params;
     if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
