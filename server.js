@@ -1,9 +1,27 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, 'dist');
+
+// Copy assets to root on startup (for Hostinger static serving)
+const assetsPath = path.join(__dirname, 'assets');
+if (!fs.existsSync(assetsPath)) {
+  console.log('Copying assets to root for Hostinger static serving...');
+  fs.mkdirSync(assetsPath, { recursive: true });
+  const distAssets = path.join(distPath, 'assets');
+  if (fs.existsSync(distAssets)) {
+    fs.readdirSync(distAssets).forEach(file => {
+      fs.copyFileSync(
+        path.join(distAssets, file),
+        path.join(assetsPath, file)
+      );
+    });
+    console.log('Assets copied successfully');
+  }
+}
 
 // Add request logging
 app.use((req, res, next) => {
