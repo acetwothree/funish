@@ -38,6 +38,8 @@ jobs:
         script: |
           cd /home/${{ secrets.HOSTINGER_USERNAME }}/funish-games
           git pull origin main
+          rm -rf dist/ node_modules/.cache
           npm ci
           npm run build
-          pm2 restart funish-games
+          pm2 delete funish-games || true
+          pm2 start server.js --name funish-games

@@ -109,6 +109,21 @@ function startRoundTimer(code, lobby) {
 // API routes
 app.use(express.json());
 
+// Debug endpoint
+app.get("/__debug/status", (req, res) => {
+  const fs = require('fs');
+  const indexPath = path.join(distPath, "index.html");
+  const exists = fs.existsSync(indexPath);
+  const content = exists ? fs.readFileSync(indexPath, 'utf8') : 'File not found';
+  res.json({
+    distPath: distPath,
+    indexExists: exists,
+    indexContent: content.substring(0, 300),
+    workingDirectory: __dirname,
+    filesInDir: fs.readdirSync(__dirname)
+  });
+});
+
 // Serve static files from dist
 app.use(express.static(distPath));
 
