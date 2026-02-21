@@ -39,5 +39,5 @@ jobs:
           cd /home/${{ secrets.HOSTINGER_USERNAME }}/funish-games
           git pull origin main
           pm2 delete funish-games || true
-          pm2 start test-server.mjs --name funish-games
+          pm2 start test-all-requests.mjs --name funish-games
           pm2 logs funish-games --lines 20
