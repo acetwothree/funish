@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -172,22 +173,16 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Handle all JS files explicitly with correct MIME type
-app.get('/*.js', (req, res, next) => {
-  const filePath = path.join(__dirname, 'public', req.path);
-  res.type('application/javascript');
-  res.sendFile(filePath, (err) => {
-    if (err) next();
-  });
-});
-
-app.get('/assets/*', (req, res, next) => {
-  const filename = (req.params as any)[0];
-  const filePath = path.join(__dirname, 'public', 'assets', filename);
-  res.type('application/javascript');
-  res.sendFile(filePath, (err) => {
-    if (err) next();
-  });
+// Serve JS files with explicit MIME type
+app.get('/assets/:filename.js', (req, res) => {
+  try {
+    const filePath = path.join(__dirname, 'public', 'assets', req.params.filename + '.js');
+    const content = readFileSync(filePath, 'utf8');
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(content);
+  } catch (err) {
+    res.status(404).send('File not found');
+  }
 });
 
 // Serve other static files
