@@ -6,6 +6,8 @@ export default defineConfig({
     target: 'node20',
     outDir: 'dist',
     emptyOutDir: true,
+    minify: 'terser',
+    sourcemap: false,
     rollupOptions: {
       input: {
         server: resolve(__dirname, 'server.ts')
@@ -14,10 +16,8 @@ export default defineConfig({
         entryFileNames: '[name].mjs',
         format: 'es'
       },
-      external: ['fsevents', 'pkg']
-    },
-    minify: 'terser',
-    sourcemap: false
+      external: ['fsevents']
+    }
   },
   esbuild: {
     target: 'node20'
