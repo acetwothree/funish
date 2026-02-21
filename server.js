@@ -150,30 +150,16 @@ io.on("connection", (socket) => {
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
 });
-app.get('/assets/:filename.js', (req, res) => {
-    try {
-        const filePath = path.join(__dirname, 'public', 'assets', req.params.filename + '.js');
-        const content = readFileSync(filePath, 'utf8');
-        res.writeHead(200, { 'Content-Type': 'application/javascript' });
-        res.end(content);
-    }
-    catch (err) {
-        res.status(404).send('File not found');
-    }
-});
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/:roomCode', (req, res) => {
+const distPath = path.join(__dirname, "dist");
+app.use(express.static(distPath, { extensions: ["html"] }));
+app.get("/:roomCode", (req, res) => {
     const { roomCode } = req.params;
     if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+        return res.sendFile(path.join(distPath, "index.html"));
     }
-    else {
-        res.status(404).send('Invalid room code');
-    }
+    return res.status(404).send("Invalid room code");
 });
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-httpServer.listen(PORT, '0.0.0.0', () => {
+app.get("*", (req, res) => res.sendFile(path.join(distPath, "index.html")));
+httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 });
