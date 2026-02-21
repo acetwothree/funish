@@ -1,9 +1,4 @@
-import { useState } from 'react';
-
 export default function App() {
-  const [username, setUsername] = useState('');
-  const [lobbyCode, setLobbyCode] = useState('');
-
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -46,8 +41,6 @@ export default function App() {
           <input
             type="text"
             placeholder="Enter your username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
             style={{
               width: '100%',
               padding: '12px',
@@ -70,11 +63,8 @@ export default function App() {
               borderRadius: '10px',
               fontSize: '18px',
               fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'transform 0.2s'
+              cursor: 'pointer'
             }}
-            onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => (e.target as HTMLButtonElement).style.transform = 'scale(1.05)'}
-            onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => (e.target as HTMLButtonElement).style.transform = 'scale(1)'}
           >
             Create Lobby
           </button>
@@ -83,8 +73,6 @@ export default function App() {
             <input
               type="text"
               placeholder="Lobby Code"
-              value={lobbyCode}
-              onChange={(e) => setLobbyCode(e.target.value.toUpperCase())}
               maxLength={4}
               style={{
                 flex: 1,
@@ -105,11 +93,8 @@ export default function App() {
                 borderRadius: '10px',
                 fontSize: '18px',
                 fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'transform 0.2s'
+                cursor: 'pointer'
               }}
-              onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => (e.target as HTMLButtonElement).style.transform = 'scale(1.05)'}
-              onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => (e.target as HTMLButtonElement).style.transform = 'scale(1)'}
             >
               Join
             </button>
