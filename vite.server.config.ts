@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
-    target: 'node18',
+    target: 'node16',
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
@@ -12,17 +12,13 @@ export default defineConfig({
       },
       output: {
         entryFileNames: '[name].js',
-        format: 'es'
-      },
-      external: ['fsevents', 'fs', 'path', 'url', 'crypto']
+        format: 'cjs'
+      }
     },
     minify: 'terser',
     sourcemap: false
   },
   esbuild: {
-    target: 'node18'
-  },
-  ssr: {
-    noExternal: []
+    target: 'node16'
   }
 });
