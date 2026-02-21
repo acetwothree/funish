@@ -215,17 +215,30 @@ app.get("/__debug/status", (req, res) => {
   }
 });
 
-// Serve static files from dist
-app.use(express.static(distPath));
+// Serve static files from build output
+app.use(express.static(distPath, {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js') || path.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 
 // API health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Simple root route for testing
-app.get("/", (req, res) => {
-  res.json({ message: "Server is running!", distPath, timestamp: new Date().toISOString() });
+// Root route - serve dist/index.html explicitly with cache busting
+app.get('/', (req, res) => {
+  const version = Date.now(); // Simple cache busting
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+// Serve index.html with cache busting
+app.get('/index.html', (req, res) => {
+  const version = Date.now(); // Simple cache busting
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Room code route
