@@ -172,15 +172,14 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Explicitly set MIME type for JS files before static serving
-app.use((req, res, next) => {
-  if (req.path.endsWith('.js')) {
-    res.type('application/javascript');
-  }
-  next();
+// Serve JS files with correct MIME type
+app.get('/assets/:filename.js', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'assets', req.params.filename + '.js');
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(filePath);
 });
 
-// Serve static files
+// Serve other static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Wildcard route for room codes
