@@ -38,5 +38,6 @@ jobs:
         script: |
           cd /home/${{ secrets.HOSTINGER_USERNAME }}/funish-games
           git pull origin main
-          npm install --production
+          npm ci
+          npm run build
           pm2 restart funish-games
