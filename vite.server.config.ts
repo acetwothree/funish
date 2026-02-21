@@ -14,12 +14,15 @@ export default defineConfig({
         entryFileNames: '[name].js',
         format: 'es'
       },
-      external: ['fsevents']
+      external: ['fsevents', 'fs', 'path', 'url', 'crypto']
     },
     minify: 'terser',
     sourcemap: false
   },
   esbuild: {
     target: 'node18'
+  },
+  ssr: {
+    noExternal: []
   }
 });

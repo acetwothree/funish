@@ -17,7 +17,7 @@ export default defineConfig(({mode}) => {
     },
     build: {
       rollupOptions: {
-        external: ['fsevents']
+        external: ['fsevents', 'fs', 'path', 'url', 'crypto']
       }
     },
     server: {
@@ -25,5 +25,8 @@ export default defineConfig(({mode}) => {
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    ssr: {
+      noExternal: []
+    }
   };
 });
