@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
-
-let socket: Socket | null = null;
 
 export const useSocket = () => {
-  const [connected, setConnected] = useState(false);
+  const [connected] = useState(false);
   const [playerId] = useState(() => {
     const saved = sessionStorage.getItem('funish_player_id');
     if (saved) return saved;
@@ -13,43 +10,24 @@ export const useSocket = () => {
     return newId;
   });
 
-  useEffect(() => {
-    if (!socket) {
-      // Connect to the same server in both dev and production
-      socket = io('/', {
-        transports: ['websocket', 'polling'],
-        upgrade: true,
-        rememberUpgrade: true
-      });
-    }
+  // Mock socket object for now (no backend connection)
+  const mockSocket = {
+    emit: (event: string, data: any) => {
+      console.log('Mock emit:', event, data);
+    },
+    on: (event: string, callback: Function) => {
+      console.log('Mock on:', event);
+    },
+    once: (event: string, callback: Function) => {
+      console.log('Mock once:', event);
+      // Simulate immediate response for create-lobby
+      if (event === 'lobby-created') {
+        setTimeout(() => callback('TEST'), 100);
+      }
+    },
+    connected: false,
+    id: playerId
+  };
 
-    const onConnect = () => {
-      console.log('Socket connected:', socket?.id);
-      setConnected(true);
-    };
-    
-    const onDisconnect = (reason: string) => {
-      console.log('Socket disconnected:', reason);
-      setConnected(false);
-    };
-
-    const onConnectError = (error: Error) => {
-      console.error('Socket connection error:', error);
-      setConnected(false);
-    };
-
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    socket.on('connect_error', onConnectError);
-
-    if (socket.connected) onConnect();
-
-    return () => {
-      socket?.off('connect', onConnect);
-      socket?.off('disconnect', onDisconnect);
-      socket?.off('connect_error', onConnectError);
-    };
-  }, []);
-
-  return { socket, connected, playerId };
+  return { socket: mockSocket, connected, playerId };
 };
