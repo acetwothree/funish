@@ -172,8 +172,14 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Serve static files in production
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files in production with proper MIME types
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
 
 // Wildcard route for room codes
 app.get('/:roomCode', (req, res) => {
