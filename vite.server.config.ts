@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
-    target: 'node20',
+    target: 'node18',
     outDir: 'dist',
     emptyOutDir: true,
     minify: 'terser',
@@ -20,6 +20,6 @@ export default defineConfig({
     }
   },
   esbuild: {
-    target: 'node20'
+    target: 'node18'
   }
 });
