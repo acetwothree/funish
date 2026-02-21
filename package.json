@@ -4,8 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "vite build",
-    "postbuild": "node -e \"require('fs').copyFileSync('dist/index.html', 'index.html')\"",
-    "postinstall": "npm run build && npm run postbuild",
+    "postinstall": "npm run build && node -e \"require('fs').copyFileSync('dist/index.html', 'index.html')\"",
     "start": "node server.js"
   },
   "engines": {
