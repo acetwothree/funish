@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Fredoka:wght@300..700&display=swap');
+
+@theme {
+  --font-bungee: "Bungee", cursive;
+  --font-fredoka: "Fredoka", sans-serif;
+  
+  --color-fun-pink: #ff4d94;
+  --color-fun-yellow: #ffcc00;
+  --color-fun-blue: #00ccff;
+  --color-fun-green: #33cc33;
+  --color-fun-purple: #9933ff;
+}
+
+body {
+  font-family: var(--font-fredoka);
+  background-color: #f0f4f8;
+  color: #1a1a1a;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-bungee);
+}
+
+.fun-card {
+  @apply rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)];
+}
+
+.fun-button {
+  @apply px-6 py-3 rounded-2xl border-4 border-black font-bungee text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all;
+}
+
+.fun-input {
+  @apply px-4 py-2 rounded-xl border-4 border-black font-fredoka focus:outline-none focus:ring-4 focus:ring-fun-blue/30;
+}
