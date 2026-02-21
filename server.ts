@@ -176,10 +176,17 @@ app.get("/api/health", (req, res) => {
 // Serve static files from build output
 app.use(express.static(distPath, { extensions: ["html"] }));
 
-// Fallback to index.html for SPA
-app.get("*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
+// Room code route
+app.get("/:roomCode", (req, res) => {
+  const { roomCode } = req.params;
+  if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
+    return res.sendFile(path.join(distPath, "index.html"));
+  }
+  return res.status(404).send("Invalid room code");
 });
+
+// Fallback to index.html for SPA
+app.get("*", (req, res) => res.sendFile(path.join(distPath, "index.html")));
 
 httpServer.listen(Number(process.env.PORT) || 3000, '0.0.0.0', () => {
   console.log(`Server running on port ${process.env.PORT || 3000}`);
