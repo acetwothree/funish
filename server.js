@@ -132,6 +132,11 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Simple root route for testing
+app.get("/", (req, res) => {
+  res.json({ message: "Server is running!", distPath, timestamp: new Date().toISOString() });
+});
+
 // Room code route
 app.get("/:roomCode", (req, res) => {
   const { roomCode } = req.params;
@@ -152,4 +157,6 @@ app.get("*", (req, res) => {
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Serving from: ${distPath}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Working directory: ${__dirname}`);
 });
