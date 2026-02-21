@@ -11,15 +11,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from dist folder
-app.use(express.static(distPath));
-
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'React app server running' });
 });
 
-// Root route - serve dist/index.html explicitly
+// Root route - serve dist/index.html explicitly (highest priority)
 app.get('/', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
@@ -36,6 +33,9 @@ app.get('/debug', (req, res) => {
     workingDirectory: __dirname
   });
 });
+
+// Serve static files from dist folder (after explicit routes)
+app.use(express.static(distPath));
 
 // Room code route
 app.get('/:roomCode', (req, res) => {
