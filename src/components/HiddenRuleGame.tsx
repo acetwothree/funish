@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Trophy, Send, Check, X, User, Clock, Info, Lightbulb, Star } from 'lucide-react';
 import { Socket } from 'socket.io-client';
 import confetti from 'canvas-confetti';

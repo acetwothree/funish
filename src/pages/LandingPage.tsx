@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useSocket } from '../hooks/useSocket';
 import { PartyPopper, Play, Users } from 'lucide-react';
 

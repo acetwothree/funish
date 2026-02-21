@@ -17,7 +17,7 @@ export default defineConfig(({mode}) => {
     },
     build: {
       rollupOptions: {
-        external: ['fsevents', 'motion']
+        external: ['fsevents']
       }
     },
     server: {

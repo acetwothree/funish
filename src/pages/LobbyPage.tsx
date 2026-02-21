@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useSocket } from '../hooks/useSocket';
 import { Users, Settings, Play, Copy, LogOut, Info, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'framer-motion';
 import HiddenRuleGame from '../components/HiddenRuleGame';
 
 export default function LobbyPage() {
