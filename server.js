@@ -3,12 +3,32 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 const distPath = path.join(__dirname, "dist");
+
+// Copy assets to root for Hostinger static serving
+const assetsPath = path.join(__dirname, 'assets');
+console.log('Copying assets to root for Hostinger static serving...');
+if (!fs.existsSync(assetsPath)) {
+  fs.mkdirSync(assetsPath, { recursive: true });
+}
+const distAssets = path.join(distPath, 'assets');
+if (fs.existsSync(distAssets)) {
+  fs.readdirSync(distAssets).forEach(file => {
+    const srcFile = path.join(distAssets, file);
+    const destFile = path.join(assetsPath, file);
+    fs.copyFileSync(srcFile, destFile);
+    console.log(`Copied ${file} to root`);
+  });
+  console.log('Assets copied successfully');
+} else {
+  console.log('Dist assets folder not found!');
+}
 
 // Socket.io setup
 const io = new Server(httpServer, {
@@ -124,6 +144,28 @@ app.get("/__debug/status", (req, res) => {
       path.join(__dirname, 'dist', 'index.html')
     ];
     
+    const assetsPath = path.join(__dirname, 'assets');
+    console.log('Checking assets path:', assetsPath);
+    console.log('Dist assets path:', path.join(distPath, 'assets'));
+
+    // Always copy assets to ensure they're up to date
+    console.log('Copying assets to root for Hostinger static serving...');
+    if (!fs.existsSync(assetsPath)) {
+      fs.mkdirSync(assetsPath, { recursive: true });
+    }
+    const distAssets = path.join(distPath, 'assets');
+    if (fs.existsSync(distAssets)) {
+      fs.readdirSync(distAssets).forEach(file => {
+        const srcFile = path.join(distAssets, file);
+        const destFile = path.join(assetsPath, file);
+        fs.copyFileSync(srcFile, destFile);
+        console.log(`Copied ${file} to root`);
+      });
+      console.log('Assets copied successfully');
+    } else {
+      console.log('Dist assets folder not found!');
+    }
+
     const indexFiles = possibleIndexes.map(file => ({
       path: file,
       exists: fs.existsSync(file),
@@ -153,6 +195,11 @@ app.get("/__debug/status", (req, res) => {
       // Process info
       nodeVersion: process.version,
       memoryUsage: process.memoryUsage(),
+      
+      // Copy assets to root on startup (for Hostinger static serving)
+      assetsPath: path.join(__dirname, 'assets'),
+      distAssetsPath: path.join(distPath, 'assets'),
+      assetsCopied: fs.existsSync(path.join(distPath, 'assets')),
       
       // Request info
       requestPath: req.path,
