@@ -173,11 +173,11 @@ app.get("/api/health", (req, res) => {
 });
 
 // Serve static files from build output
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 httpServer.listen(PORT, '0.0.0.0', () => {
