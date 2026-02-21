@@ -181,8 +181,9 @@ app.get('/*.js', (req, res, next) => {
   });
 });
 
-app.get('/assets/*.js', (req, res, next) => {
-  const filePath = path.join(__dirname, 'public', 'assets', req.params[0] + '.js');
+app.get('/assets/*', (req, res, next) => {
+  const filename = (req.params as any)[0];
+  const filePath = path.join(__dirname, 'public', 'assets', filename);
   res.type('application/javascript');
   res.sendFile(filePath, (err) => {
     if (err) next();

@@ -149,13 +149,24 @@ io.on("connection", (socket) => {
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
 });
-app.use(express.static(path.join(__dirname, 'public'), {
-    setHeaders: (res, path) => {
-        if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        }
-    }
-}));
+app.get('/*.js', (req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    res.type('application/javascript');
+    res.sendFile(filePath, (err) => {
+        if (err)
+            next();
+    });
+});
+app.get('/assets/*', (req, res, next) => {
+    const filename = req.params[0];
+    const filePath = path.join(__dirname, 'public', 'assets', filename);
+    res.type('application/javascript');
+    res.sendFile(filePath, (err) => {
+        if (err)
+            next();
+    });
+});
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('/:roomCode', (req, res) => {
     const { roomCode } = req.params;
     if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
