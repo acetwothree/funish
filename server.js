@@ -216,46 +216,24 @@ app.get("/__debug/status", (req, res) => {
 });
 
 // Serve static files from build output
-app.use(express.static(distPath, {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.js') || path.endsWith('.css')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-  }
-}));
+app.use(express.static(distPath));
 
 // API health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Root route - serve dist/index.html explicitly with cache busting
+// Root route - serve dist/index.html
 app.get('/', (req, res) => {
-  const version = Date.now(); // Simple cache busting
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Serve index.html with cache busting
-app.get('/index.html', (req, res) => {
-  const version = Date.now(); // Simple cache busting
+// Fallback to index.html for SPA routes
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).send('API endpoint not found');
+  }
   res.sendFile(path.join(distPath, 'index.html'));
-});
-
-// Room code route
-app.get("/:roomCode", (req, res) => {
-  const { roomCode } = req.params;
-  if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
-    return res.sendFile(path.join(distPath, "index.html"));
-  }
-  return res.status(404).send("Invalid room code");
-});
-
-// SPA fallback (exclude API routes)
-app.get("*", (req, res) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/__debug/')) {
-    return res.status(404).send('Endpoint not found');
-  }
-  res.sendFile(path.join(distPath, "index.html"));
 });
 
 httpServer.listen(PORT, '0.0.0.0', () => {
