@@ -3,7 +3,6 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -173,31 +172,10 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Serve JS files with explicit MIME type using writeHead
-app.get('/assets/:filename.js', (req, res) => {
-  try {
-    const filePath = path.join(__dirname, 'public', 'assets', req.params.filename + '.js');
-    const content = readFileSync(filePath, 'utf8');
-    res.writeHead(200, { 'Content-Type': 'application/javascript' });
-    res.end(content);
-  } catch (err) {
-    res.status(404).send('File not found');
-  }
-});
-
-// Serve other static files
+// Serve static files from build output
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Wildcard route for room codes
-app.get('/:roomCode', (req, res) => {
-  const { roomCode } = req.params;
-  if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  } else {
-    res.status(404).send('Invalid room code');
-  }
-});
-
+// Fallback to index.html for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
