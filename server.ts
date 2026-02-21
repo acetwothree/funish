@@ -173,13 +173,13 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Serve JS files with explicit MIME type
+// Serve JS files with explicit MIME type using writeHead
 app.get('/assets/:filename.js', (req, res) => {
   try {
     const filePath = path.join(__dirname, 'public', 'assets', req.params.filename + '.js');
     const content = readFileSync(filePath, 'utf8');
-    res.setHeader('Content-Type', 'application/javascript');
-    res.send(content);
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end(content);
   } catch (err) {
     res.status(404).send('File not found');
   }
