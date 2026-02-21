@@ -42,5 +42,5 @@ jobs:
           npm ci
           npm run build
           pm2 delete funish-games || true
-          pm2 start server-simple.js --name funish-games
+          pm2 start server-simple.mjs --name funish-games
           pm2 logs funish-games --lines 20
