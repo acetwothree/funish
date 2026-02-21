@@ -172,11 +172,21 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Serve JS files with correct MIME type
-app.get('/assets/:filename.js', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'assets', req.params.filename + '.js');
-  res.setHeader('Content-Type', 'application/javascript');
-  res.sendFile(filePath);
+// Handle all JS files explicitly with correct MIME type
+app.get('/*.js', (req, res, next) => {
+  const filePath = path.join(__dirname, 'public', req.path);
+  res.type('application/javascript');
+  res.sendFile(filePath, (err) => {
+    if (err) next();
+  });
+});
+
+app.get('/assets/*.js', (req, res, next) => {
+  const filePath = path.join(__dirname, 'public', 'assets', req.params[0] + '.js');
+  res.type('application/javascript');
+  res.sendFile(filePath, (err) => {
+    if (err) next();
+  });
 });
 
 // Serve other static files
