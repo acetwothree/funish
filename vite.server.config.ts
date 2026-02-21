@@ -16,7 +16,7 @@ export default defineConfig({
         entryFileNames: '[name].mjs',
         format: 'es'
       },
-      external: ['fsevents']
+      external: ['fsevents', 'motion']
     }
   },
   esbuild: {
