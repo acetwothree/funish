@@ -1,0 +1,42 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      env:
+        NODE_ENV: production
+        
+    - name: Deploy to Hostinger
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USERNAME }}
+        key: ${{ secrets.HOSTINGER_SSH_KEY }}
+        port: ${{ secrets.HOSTINGER_PORT || 22 }}
+        script: |
+          cd /home/${{ secrets.HOSTINGER_USERNAME }}/funish-games
+          git pull origin main
+          npm install --production
+          pm2 restart funish-games

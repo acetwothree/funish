@@ -13,7 +13,8 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         format: 'es'
-      }
+      },
+      external: ['fsevents']
     },
     minify: 'terser',
     sourcemap: false
