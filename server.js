@@ -19,6 +19,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'React app server running' });
 });
 
+// Root route - serve dist/index.html explicitly
+app.get('/', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 // Debug route to show dist contents
 app.get('/debug', (req, res) => {
   const fs = require('fs');
