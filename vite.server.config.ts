@@ -3,7 +3,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
-    target: 'node16',
+    target: 'node20',
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
@@ -11,8 +11,8 @@ export default defineConfig({
         server: resolve(__dirname, 'server.ts')
       },
       output: {
-        entryFileNames: '[name].js',
-        format: 'cjs'
+        entryFileNames: '[name].mjs',
+        format: 'es'
       },
       external: ['fsevents', 'pkg']
     },
@@ -20,6 +20,6 @@ export default defineConfig({
     sourcemap: false
   },
   esbuild: {
-    target: 'node16'
+    target: 'node20'
   }
 });
