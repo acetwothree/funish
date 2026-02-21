@@ -3,189 +3,138 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-    },
-});
-const PORT = Number(process.env.PORT) || 3000;
-const lobbies = new Map();
-function generateCode() {
-    return Math.random().toString(36).substring(2, 6).toUpperCase();
-}
-io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
-    socket.on("check-lobby", (code, callback) => {
-        const exists = lobbies.has(code.toUpperCase());
-        callback(exists);
-    });
-    socket.on("join-lobby", ({ code, username, playerId }) => {
-        const lobbyCode = code.toUpperCase();
-        let lobby = lobbies.get(lobbyCode);
-        if (!lobby) {
-            socket.emit("error", "Lobby not found");
-            return;
-        }
-        socket.join(lobbyCode);
-        socket.playerId = playerId;
-        socket.lobbyCode = lobbyCode;
-        lobby.players.set(playerId, {
-            id: playerId,
-            socketId: socket.id,
-            username,
-            score: 0,
-            ready: true
-        });
-        const updateData = {
-            players: Array.from(lobby.players.values()),
-            gameState: lobby.gameState,
-            selectedGame: lobby.selectedGame,
-            settings: lobby.settings,
-            gameData: lobby.gameData,
-            hostId: lobby.host
-        };
-        io.to(lobbyCode).emit("lobby-update", updateData);
-    });
-    socket.on("create-lobby", ({ username, playerId }) => {
-        const code = generateCode();
-        const lobby = {
-            code,
-            host: playerId,
-            players: new Map(),
-            gameState: "waiting",
-            selectedGame: "hidden-rule",
-            settings: {
-                maxPlayers: 8,
-                roundTime: 60,
-                roundsPerPlayer: 1
-            },
-            gameData: {
-                ruleMaker: null,
-                ruleMakerIndex: -1,
-                ruleMakerQueue: [],
-                currentRound: 0,
-                totalRounds: 0,
-                rule: "",
-                hint: "",
-                hintAvailable: false,
-                submissions: [],
-                timer: 60,
-                correctGuessers: []
-            }
-        };
-        lobbies.set(code, lobby);
-        socket.emit("lobby-created", code);
-    });
-    socket.on("start-game", ({ code, playerId }) => {
-        const lobbyCode = code.toUpperCase();
-        const lobby = lobbies.get(lobbyCode);
-        if (lobby && lobby.host === playerId) {
-            if (lobby.players.size < 2) {
-                socket.emit("error", "Need at least 2 players to start!");
-                return;
-            }
-            lobby.gameState = "playing";
-            if (lobby.selectedGame === "hidden-rule") {
-                const playerIds = Array.from(lobby.players.keys());
-                lobby.gameData.ruleMakerQueue = playerIds.sort(() => Math.random() - 0.5);
-                lobby.gameData.ruleMakerIndex = 0;
-                lobby.gameData.ruleMaker = lobby.gameData.ruleMakerQueue[0];
-                lobby.gameData.currentRound = 1;
-                lobby.gameData.totalRounds = lobby.gameData.ruleMakerQueue.length * (lobby.settings.roundsPerPlayer || 1);
-                lobby.gameData.submissions = [];
-                lobby.gameData.rule = "";
-                lobby.gameData.hint = "";
-                lobby.gameData.hintAvailable = false;
-                lobby.gameData.timer = 60;
-                lobby.gameData.timerStarted = false;
-                lobby.gameData.roundOver = false;
-                lobby.gameData.revealing = false;
-                lobby.gameData.correctGuessers = [];
-                lobby.gameData.ruleGuesses = [];
-                lobby.gameData.transitioning = false;
-            }
-            io.to(lobbyCode).emit("lobby-update", {
-                players: Array.from(lobby.players.values()),
-                gameState: lobby.gameState,
-                selectedGame: lobby.selectedGame,
-                settings: lobby.settings,
-                gameData: lobby.gameData,
-                hostId: lobby.host
-            });
-        }
-    });
-    socket.on("disconnect", () => {
-        const playerId = socket.playerId;
-        const lobbyCode = socket.lobbyCode;
-        if (playerId && lobbyCode) {
-            const lobby = lobbies.get(lobbyCode);
-            if (lobby && lobby.players.has(playerId)) {
-                lobby.players.delete(playerId);
-                if (lobby.players.size === 0) {
-                    lobbies.delete(lobbyCode);
-                }
-                else {
-                    if (lobby.host === playerId) {
-                        lobby.host = Array.from(lobby.players.keys())[0];
-                    }
-                    io.to(lobbyCode).emit("lobby-update", {
-                        players: Array.from(lobby.players.values()),
-                        gameState: lobby.gameState,
-                        selectedGame: lobby.selectedGame,
-                        settings: lobby.settings,
-                        gameData: lobby.gameData,
-                        hostId: lobby.host
-                    });
-                }
-            }
-        }
-    });
-});
 const distPath = path.join(__dirname, "dist");
 
-// Debug endpoint
-app.get("/__debug/index-source", (req, res) => {
-    const indexPath = path.join(distPath, "index.html");
-    const exists = require('fs').existsSync(indexPath);
-    res.json({
-        servingFrom: indexPath,
-        exists: exists,
-        content: exists ? require('fs').readFileSync(indexPath, 'utf8').substring(0, 200) : 'File not found'
-    });
+// Socket.io setup
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
 });
+
+const PORT = Number(process.env.PORT) || 3000;
+
+// Game state
+const lobbies = new Map();
+
+function generateCode() {
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
+
+// Socket handlers
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  socket.on('createLobby', (data) => {
+    const code = generateCode();
+    const lobby = {
+      code,
+      players: [{ id: socket.id, ...data }],
+      host: socket.id,
+      settings: {
+        maxPlayers: 8,
+        rounds: 5,
+        timer: 60
+      },
+      gameData: null
+    };
+    lobbies.set(code, lobby);
+    socket.join(code);
+    socket.emit('lobbyCreated', { code, lobby });
+    io.to(code).emit('lobbyUpdate', lobby);
+  });
+
+  socket.on('joinLobby', ({ code, player }) => {
+    const lobby = lobbies.get(code);
+    if (lobby && lobby.players.length < lobby.settings.maxPlayers) {
+      lobby.players.push({ id: socket.id, ...player });
+      socket.join(code);
+      socket.emit('joinedLobby', { code, lobby });
+      io.to(code).emit('lobbyUpdate', lobby);
+    } else {
+      socket.emit('joinError', 'Invalid code or lobby full');
+    }
+  });
+
+  socket.on('startGame', ({ code }) => {
+    const lobby = lobbies.get(code);
+    if (lobby && lobby.host === socket.id) {
+      if (lobby.players.length < 2) {
+        socket.emit('error', 'Need at least 2 players to start!');
+        return;
+      }
+      lobby.gameData = {
+        currentRound: 1,
+        totalRounds: lobby.settings.rounds,
+        timer: lobby.settings.timer,
+        phase: 'playing'
+      };
+      io.to(code).emit('gameStarted', lobby);
+      startRoundTimer(code, lobby);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+    for (const [code, lobby] of lobbies.entries()) {
+      lobby.players = lobby.players.filter(p => p.id !== socket.id);
+      if (lobby.players.length === 0) {
+        lobbies.delete(code);
+      } else {
+        io.to(code).emit('lobbyUpdate', lobby);
+      }
+    }
+  });
+});
+
+function startRoundTimer(code, lobby) {
+  const timer = setInterval(() => {
+    lobby.gameData.timer--;
+    io.to(code).emit('timerUpdate', lobby.gameData.timer);
+    
+    if (lobby.gameData.timer <= 0) {
+      clearInterval(timer);
+      lobby.gameData.phase = 'ended';
+      io.to(code).emit('roundEnded', lobby);
+    }
+  }, 1000);
+}
+
+// API routes
+app.use(express.json());
 
 // Serve static files from dist
 app.use(express.static(distPath));
 
-// API routes (must come before SPA fallback)
+// API health check
 app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+  res.json({ status: "ok" });
 });
 
 // Room code route
 app.get("/:roomCode", (req, res) => {
-    const { roomCode } = req.params;
-    if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
-        return res.sendFile(path.join(distPath, "index.html"));
-    }
-    return res.status(404).send("Invalid room code");
+  const { roomCode } = req.params;
+  if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
+    return res.sendFile(path.join(distPath, "index.html"));
+  }
+  return res.status(404).send("Invalid room code");
 });
 
 // SPA fallback (exclude API routes)
 app.get("*", (req, res) => {
-    if (req.path.startsWith('/api/') || req.path.startsWith('/__debug/')) {
-        return res.status(404).send('Endpoint not found');
-    }
-    res.sendFile(path.join(distPath, "index.html"));
+  if (req.path.startsWith('/api/') || req.path.startsWith('/__debug/')) {
+    return res.status(404).send('Endpoint not found');
+  }
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
-httpServer.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Serving from: ${distPath}`);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Serving from: ${distPath}`);
 });
