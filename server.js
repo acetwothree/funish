@@ -147,11 +147,17 @@ io.on("connection", (socket) => {
         }
     });
 });
+const distPath = path.join(__dirname, "dist");
+
+// Serve static files from dist
+app.use(express.static(distPath));
+
+// API routes (must come before SPA fallback)
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
 });
-const distPath = path.join(__dirname, "dist");
-app.use(express.static(distPath, { extensions: ["html"] }));
+
+// Room code route
 app.get("/:roomCode", (req, res) => {
     const { roomCode } = req.params;
     if (/^[A-Za-z0-9]{4}$/.test(roomCode)) {
@@ -159,7 +165,15 @@ app.get("/:roomCode", (req, res) => {
     }
     return res.status(404).send("Invalid room code");
 });
-app.get("*", (req, res) => res.sendFile(path.join(distPath, "index.html")));
+
+// SPA fallback (exclude API routes)
+app.get("*", (req, res) => {
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).send('API endpoint not found');
+    }
+    res.sendFile(path.join(distPath, "index.html"));
+});
+
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 });
