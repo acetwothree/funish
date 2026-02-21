@@ -112,16 +112,60 @@ app.use(express.json());
 // Debug endpoint
 app.get("/__debug/status", (req, res) => {
   const fs = require('fs');
-  const indexPath = path.join(distPath, "index.html");
-  const exists = fs.existsSync(indexPath);
-  const content = exists ? fs.readFileSync(indexPath, 'utf8') : 'File not found';
-  res.json({
-    distPath: distPath,
-    indexExists: exists,
-    indexContent: content.substring(0, 300),
-    workingDirectory: __dirname,
-    filesInDir: fs.readdirSync(__dirname)
-  });
+  try {
+    const indexPath = path.join(distPath, "index.html");
+    const exists = fs.existsSync(indexPath);
+    const content = exists ? fs.readFileSync(indexPath, 'utf8') : 'File not found';
+    
+    // Check all possible index.html files
+    const possibleIndexes = [
+      path.join(__dirname, 'index.html'),
+      path.join(__dirname, 'public', 'index.html'),
+      path.join(__dirname, 'dist', 'index.html')
+    ];
+    
+    const indexFiles = possibleIndexes.map(file => ({
+      path: file,
+      exists: fs.existsSync(file),
+      content: fs.existsSync(file) ? fs.readFileSync(file, 'utf8').substring(0, 200) : 'Not found'
+    }));
+    
+    res.json({
+      // Server info
+      workingDirectory: __dirname,
+      distPath: distPath,
+      port: PORT,
+      env: process.env.NODE_ENV,
+      
+      // File analysis
+      indexFiles: indexFiles,
+      mainIndexExists: exists,
+      mainIndexContent: content.substring(0, 500),
+      
+      // Check for /src/main.tsx reference
+      hasSrcMainTsx: content.includes('/src/main.tsx'),
+      hasAssetsJs: content.includes('/assets/'),
+      
+      // Directory contents
+      rootFiles: fs.readdirSync(__dirname),
+      distFiles: fs.existsSync(distPath) ? fs.readdirSync(distPath) : 'dist folder not found',
+      
+      // Process info
+      nodeVersion: process.version,
+      memoryUsage: process.memoryUsage(),
+      
+      // Request info
+      requestPath: req.path,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.json({
+      error: error.message,
+      stack: error.stack,
+      workingDirectory: __dirname,
+      distPath: distPath
+    });
+  }
 });
 
 // Serve static files from dist
