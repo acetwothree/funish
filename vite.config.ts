@@ -13,6 +13,11 @@ export default defineConfig({
     outDir: 'public',
     emptyOutDir: true,
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        format: 'iife',
+      },
+    },
   },
   server: {
     port: 3000,
