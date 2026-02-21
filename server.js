@@ -149,6 +149,17 @@ io.on("connection", (socket) => {
 });
 const distPath = path.join(__dirname, "dist");
 
+// Debug endpoint
+app.get("/__debug/index-source", (req, res) => {
+    const indexPath = path.join(distPath, "index.html");
+    const exists = require('fs').existsSync(indexPath);
+    res.json({
+        servingFrom: indexPath,
+        exists: exists,
+        content: exists ? require('fs').readFileSync(indexPath, 'utf8').substring(0, 200) : 'File not found'
+    });
+});
+
 // Serve static files from dist
 app.use(express.static(distPath));
 
@@ -168,12 +179,13 @@ app.get("/:roomCode", (req, res) => {
 
 // SPA fallback (exclude API routes)
 app.get("*", (req, res) => {
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).send('API endpoint not found');
+    if (req.path.startsWith('/api/') || req.path.startsWith('/__debug/')) {
+        return res.status(404).send('Endpoint not found');
     }
     res.sendFile(path.join(distPath, "index.html"));
 });
 
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`Serving from: ${distPath}`);
 });
