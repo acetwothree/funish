@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsc && vite build",
-    "start": "NODE_ENV=production node dist/server.js",
+    "build": "tsc -p tsconfig.server.json && vite build",
+    "start": "NODE_ENV=production node server.js",
     "preview": "vite preview"
   },
   "engines": {
