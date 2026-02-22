@@ -35,9 +35,9 @@
         }
         
         socket = io('/', {
-          transports: ['websocket', 'polling'],
-          upgrade: true,
-          rememberUpgrade: true
+          transports: ['polling'], // Use polling instead of websocket
+          upgrade: false, // Don't upgrade to websocket
+          rememberUpgrade: false
         });
         
         playerId = generatePlayerId();
