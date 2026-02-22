@@ -58,8 +58,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Serve static files
+// Serve static files from build output
 app.use(express.static(distPath));
+
+// Serve assets from correct path
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 
 // Fallback to index.html
 app.get('*', (req, res) => {
