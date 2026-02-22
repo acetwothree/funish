@@ -275,6 +275,9 @@ app.get('*', (req, res) => {
               console.log('Generated player HTML:', playerHtml);
               
               root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 600px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Share this code with your friends!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (' + playerCount + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + playerHtml + '</div></div><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Lobby</button></div></div>';
+              
+              // Set up auto-refresh for host to see new players
+              setupAutoRefresh(lobby.code);
             } else {
               // User is not in lobby, show join interface
               const playerCount = lobby.players ? lobby.players.length : 0;
@@ -291,6 +294,36 @@ app.get('*', (req, res) => {
               
               root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 500px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">JOIN LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 30px;">Your friend is waiting for you!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS IN LOBBY (' + playerCount + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + playerHtml + '</div></div><div style="margin-bottom: 20px;"><label style="display: block; font-weight: bold; margin-bottom: 8px; color: white;">Your Name</label><input type="text" id="joinUsername" placeholder="Enter your name" style="width: 100%; padding: 12px; border-radius: 10px; border: none; font-size:16px; box-sizing: border-box;" /></div><button onclick="joinThisLobby()" style="background: linear-gradient(45deg, #4ECDC4, #44A08D); color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%;">👥 Join Lobby</button><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 10px;">🚪 Back to Main</button></div></div>';
             }
+          }
+          
+          // Auto-refresh function for lobby
+          function setupAutoRefresh(lobbyCode) {
+            console.log('Setting up auto-refresh for lobby:', lobbyCode);
+            
+            // Clear any existing refresh interval
+            if (window.lobbyRefreshInterval) {
+              clearInterval(window.lobbyRefreshInterval);
+            }
+            
+            // Set up new refresh interval (check every 3 seconds)
+            window.lobbyRefreshInterval = setInterval(() => {
+              console.log('Auto-refreshing lobby...');
+              fetch('/api/lobby/' + lobbyCode)
+                .then(response => response.json())
+                .then(lobby => {
+                  if (lobby.error) {
+                    console.log('Lobby no longer exists:', lobby.error);
+                    clearInterval(window.lobbyRefreshInterval);
+                    window.location.href = '/';
+                  } else {
+                    console.log('Lobby updated, refreshing display');
+                    showLobbyScreen(lobby);
+                  }
+                })
+                .catch(error => {
+                  console.error('Auto-refresh error:', error);
+                });
+            }, 3000); // Refresh every 3 seconds
           }
           
           // Join this lobby function
