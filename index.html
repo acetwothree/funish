@@ -125,6 +125,7 @@
           return;
         }
         
+        // Try Socket.io first
         if (!socket) {
           console.log('Socket not initialized, calling initSocket');
           initSocket();
@@ -133,6 +134,14 @@
             console.log('Socket connected, sending create-lobby request');
             createLobbyRequest(username);
           });
+          
+          // Fallback: if socket doesn't connect in 3 seconds, use local lobby
+          setTimeout(() => {
+            if (!socket || !socket.connected) {
+              console.log('Socket failed, using local fallback');
+              createLocalLobby(username);
+            }
+          }, 3000);
         } else if (socket.connected) {
           console.log('Socket already connected, sending request immediately');
           createLobbyRequest(username);
@@ -142,13 +151,29 @@
             console.log('Socket reconnected, sending create-lobby request');
             createLobbyRequest(username);
           });
+          
+          // Fallback: if socket doesn't connect in 3 seconds, use local lobby
+          setTimeout(() => {
+            if (!socket.connected) {
+              console.log('Socket failed, using local fallback');
+              createLocalLobby(username);
+            }
+          }, 3000);
         }
       };
       
-      // Separate function for the actual request
+      // Separate function for actual request
       function createLobbyRequest(username) {
         console.log('Sending create-lobby request for:', username, 'Player ID:', playerId);
         socket.emit('create-lobby', { username, playerId });
+      }
+      
+      // Fallback function for local lobby creation
+      function createLocalLobby(username) {
+        console.log('Creating local lobby for:', username);
+        const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+        alert('Lobby created! Code: ' + code + ' (Local mode - Socket.io not available)');
+        window.location.href = '/' + code;
       }
       
       // Join lobby function
