@@ -32,13 +32,17 @@
           return;
         }
         
+        // Generate and store player ID before creating lobby
+        const playerId = generatePlayerId();
+        console.log('Generated player ID for lobby creation:', playerId);
+        
         // Call simple server API
         fetch('/api/create-lobby', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ username })
+          body: JSON.stringify({ username, playerId })
         })
         .then(response => response.json())
         .then(data => {

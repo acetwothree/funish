@@ -59,24 +59,27 @@ app.post('/api/create-lobby', express.json({type: '*/*'}), (req, res) => {
     console.log('Create lobby request received at:', new Date().toISOString());
     console.log('Request body:', req.body);
     
-    const { username } = req.body;
+    const { username, playerId } = req.body;
     if (!username) {
       console.log('Error: Username required');
       return res.status(400).json({ error: 'Username required' });
     }
     
     const code = generateCode();
+    // Use the player ID from browser, or generate a new one
+    const finalPlayerId = playerId || 'player_' + Math.random().toString(36).substring(2, 15);
     const lobby = {
       code,
-      players: [{ username, id: 'player1' }],
+      players: [{ username, id: finalPlayerId }],
       createdAt: new Date().toISOString()
     };
     
     lobbies.set(code, lobby);
     console.log('Created lobby:', code);
+    console.log('Host player ID:', finalPlayerId);
     console.log('All lobbies:', Array.from(lobbies.keys()));
     
-    res.json({ success: true, code });
+    res.json({ success: true, code, playerId: finalPlayerId });
   } catch (error) {
     console.error('Create lobby error:', error);
     console.error('Error stack:', error.stack);
@@ -166,10 +169,14 @@ app.get('/', (req, res) => {
       <div id="result"></div>
       <script>
         function testCreateLobby() {
+          const playerUsername = 'TestUser';
+          const playerId = 'player_' + Math.random().toString(36).substring(2, 15);
+          sessionStorage.setItem('funish_player_id', playerId);
+          
           fetch('/api/create-lobby', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: 'TestUser' })
+            body: JSON.stringify({ username: playerUsername, playerId })
           })
           .then(response => response.json())
           .then(data => {
