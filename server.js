@@ -408,7 +408,7 @@ app.get('*', (req, res) => {
             html += '<span style="color: #4ECDC4; font-size: 24px;">⏰</span>';
             html += '<div style="text-align: center;">';
             html += '<p style="font-size: 10px; color: #666; margin: 0;">' + (gameState.roundOver ? 'STATUS' : !gameState.timerStarted ? 'WAITING' : 'TIME LEFT') + '</p>';
-            html += '<p style="font-size: 24px; font-weight: bold; margin: 0; color: ' + (gameState.timer <= 10 && !gameState.roundOver ? '#FF6B9D' : 'black') + ';">';
+            html += '<p style=\"font-size: 24px; font-weight: bold; margin: 0; color: ' + (gameState.timer <= 10 && !gameState.roundOver ? '#FF6B9D' : 'black') + ';\">';
             html += (gameState.roundOver ? 'WAITING FOR RULE GUESSES' : !gameState.timerStarted ? 'RULE...' : '0:' + gameState.timer.toString().padStart(2, '0'));
             html += '</p>';
             html += '</div>';
