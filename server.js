@@ -385,24 +385,184 @@ app.get('*', (req, res) => {
             const mySubmission = gameState.submissions.find(s => s.playerId === currentUserId && s.status === 'pending');
             const hasGuessedCorrectly = gameState.correctGuessers.includes(currentUserId);
             
-            return '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; padding: 20px;"><div style="max-width: 1200px; margin: 0 auto; position: relative;"><div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;"><div style="background: #FF6B9D; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden;"><span style="color: white; font-size: 24px;">🛡️</span><div style="text-align: center; color: white;"><p style="font-size: 10px; margin: 0; opacity: 0.8;">RULE MAKER</p><p style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">' + (ruleMaker?.username || '???') + '</p></div>' + (isRuleMaker ? '<div style="position: absolute; inset: 0; background: rgba(255,255,255,0.2); animation: pulse 2s infinite;"></div>' : '') + '</div><div style="background: white; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;"><span style="color: #4ECDC4; font-size: 24px;">⏰</span><div style="text-align: center;"><p style="font-size: 10px; color: #666; margin: 0;">' + (gameState.roundOver ? 'STATUS' : !gameState.timerStarted ? 'WAITING' : 'TIME LEFT') + '</p><p style="font-size: 24px; font-weight: bold; margin: 0; color: ' + (gameState.timer <= 10 && !gameState.roundOver ? '#FF6B9D' : 'black') + ';">' + (gameState.roundOver ? 'WAITING FOR RULE GUESSES' : !gameState.timerStarted ? 'RULE...' : '0:' + gameState.timer.toString().padStart(2, '0')) + '</p></div></div><div style="background: #FFD93D; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;"><span style="color: black; font-size: 24px;">⭐</span><div style="text-align: center;"><p style="font-size: 10px; color: rgba(0,0,0,0.6); margin: 0;">ROUND</p><p style="font-size: 24px; font-weight: bold; margin: 0;">' + gameState.currentRound + ' / ' + gameState.totalRounds + '</p></div></div></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;"><div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid black;">' + (isRuleMaker ? generateRuleMakerUI(gameState) : generateGuesserUI(gameState, mySubmission, hasGuessedCorrectly, ruleMaker)) + '</div><div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid black; min-height: 500px;"><h3 style="font-size: 24px; margin-bottom: 20px;">SUBMISSIONS</h3><div style="max-height: 600px; overflow-y: auto;">' + (gameState.submissions.length === 0 ? '<p style="text-align: center; color: #999; font-style: italic; padding: 40px;">No submissions yet...</p>' : gameState.submissions.slice().reverse().map(sub => generateSubmissionHTML(sub, isRuleMaker)).join('')) + '</div></div></div><div style="text-align: center; margin-top: 30px;"><button onclick="window.location.href=\'/'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Game</button></div></div></div>';
+            let html = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; padding: 20px;">';
+            html += '<div style="max-width: 1200px; margin: 0 auto; position: relative;">';
+            
+            // Game Header
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;">';
+            
+            // Rule Maker Card
+            html += '<div style="background: #FF6B9D; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden;">';
+            html += '<span style="color: white; font-size: 24px;">🛡️</span>';
+            html += '<div style="text-align: center; color: white;">';
+            html += '<p style="font-size: 10px; margin: 0; opacity: 0.8;">RULE MAKER</p>';
+            html += '<p style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">' + (ruleMaker?.username || '???') + '</p>';
+            html += '</div>';
+            if (isRuleMaker) {
+              html += '<div style="position: absolute; inset: 0; background: rgba(255,255,255,0.2); animation: pulse 2s infinite;"></div>';
+            }
+            html += '</div>';
+            
+            // Timer Card
+            html += '<div style="background: white; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">';
+            html += '<span style="color: #4ECDC4; font-size: 24px;">⏰</span>';
+            html += '<div style="text-align: center;">';
+            html += '<p style="font-size: 10px; color: #666; margin: 0;">' + (gameState.roundOver ? 'STATUS' : !gameState.timerStarted ? 'WAITING' : 'TIME LEFT') + '</p>';
+            html += '<p style="font-size: 24px; font-weight: bold; margin: 0; color: ' + (gameState.timer <= 10 && !gameState.roundOver ? '#FF6B9D' : 'black') + ';">';
+            html += (gameState.roundOver ? 'WAITING FOR RULE GUESSES' : !gameState.timerStarted ? 'RULE...' : '0:' + gameState.timer.toString().padStart(2, '0'));
+            html += '</p>';
+            html += '</div>';
+            html += '</div>';
+            
+            // Round Card
+            html += '<div style="background: #FFD93D; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;">';
+            html += '<span style="color: black; font-size: 24px;">⭐</span>';
+            html += '<div style="text-align: center;">';
+            html += '<p style="font-size: 10px; color: rgba(0,0,0,0.6); margin: 0;">ROUND</p>';
+            html += '<p style="font-size: 24px; font-weight: bold; margin: 0;">' + gameState.currentRound + ' / ' + gameState.totalRounds + '</p>';
+            html += '</div>';
+            html += '</div>';
+            
+            html += '</div>';
+            
+            // Main Game Area
+            html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">';
+            
+            // Left Side: Actions
+            html += '<div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid black;">';
+            html += (isRuleMaker ? generateRuleMakerUI(gameState) : generateGuesserUI(gameState, mySubmission, hasGuessedCorrectly, ruleMaker));
+            html += '</div>';
+            
+            // Right Side: Submissions Feed
+            html += '<div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid black; min-height: 500px;">';
+            html += '<h3 style="font-size: 24px; margin-bottom: 20px;">SUBMISSIONS</h3>';
+            html += '<div style="max-height: 600px; overflow-y: auto;">';
+            
+            if (gameState.submissions.length === 0) {
+              html += '<p style="text-align: center; color: #999; font-style: italic; padding: 40px;">No submissions yet...</p>';
+            } else {
+              gameState.submissions.slice().reverse().forEach(sub => {
+                html += generateSubmissionHTML(sub, isRuleMaker);
+              });
+            }
+            
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            // Footer
+            html += '<div style="text-align: center; margin-top: 30px;">';
+            html += '<button onclick="window.location.href=\'/'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Game</button>';
+            html += '</div>';
+            
+            html += '</div>';
+            html += '</div>';
+            
+            return html;
           }
           
           // Generate Rule Maker UI
           function generateRuleMakerUI(gameState) {
             if (!gameState.rule) {
-              return '<div><h3 style="font-size: 24px; margin-bottom: 20px;">🛡️ YOU ARE THE RULE MAKER!</h3><div style="background: rgba(255,107,157,0.1); padding: 15px; border-radius: 10px; border: 2px solid #FF6B9D; margin-bottom: 20px;"><p style="font-size: 12px; color: #FF6B9D; font-weight: bold;">🤫 SHHH! DO NOT TALK OUT LOUD!</p></div><div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; border: 2px dashed #4ECDC4; margin-bottom: 20px;"><p style="font-size: 10px; color: #4ECDC4; margin-bottom: 10px;">CREATIVE EXAMPLES:</p><ul style="font-size: 12px; color: #666; margin: 0; padding-left: 20px;"><li>"Words that contain a double letter" (Apple, Moon)</li><li>"Words that are things you can find in a kitchen" (Fork, Oven)</li><li>"Words that end with a vowel" (Pizza, Radio)</li></ul></div><textarea id="ruleInput" placeholder="Enter your secret rule..." style="width: 100%; height: 80px; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; resize: none; margin-bottom: 15px;" maxlength="200"></textarea><button onclick="setRule()" style="background: #FFD93D; color: black; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%;">ESTABLISH RULE</button></div>';
+              let html = '<div>';
+              html += '<h3 style="font-size: 24px; margin-bottom: 20px;">🛡️ YOU ARE THE RULE MAKER!</h3>';
+              html += '<div style="background: rgba(255,107,157,0.1); padding: 15px; border-radius: 10px; border: 2px solid #FF6B9D; margin-bottom: 20px;">';
+              html += '<p style="font-size: 12px; color: #FF6B9D; font-weight: bold;">🤫 SHHH! DO NOT TALK OUT LOUD!</p>';
+              html += '</div>';
+              html += '<div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; border: 2px dashed #4ECDC4; margin-bottom: 20px;">';
+              html += '<p style="font-size: 10px; color: #4ECDC4; margin-bottom: 10px;">CREATIVE EXAMPLES:</p>';
+              html += '<ul style="font-size: 12px; color: #666; margin: 0; padding-left: 20px;">';
+              html += '<li>"Words that contain a double letter" (Apple, Moon)</li>';
+              html += '<li>"Words that are things you can find in a kitchen" (Fork, Oven)</li>';
+              html += '<li>"Words that end with a vowel" (Pizza, Radio)</li>';
+              html += '</ul>';
+              html += '</div>';
+              html += '<textarea id="ruleInput" placeholder="Enter your secret rule..." style="width: 100%; height: 80px; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; resize: none; margin-bottom: 15px;" maxlength="200"></textarea>';
+              html += '<button onclick="setRule()" style="background: #FFD93D; color: black; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%;">ESTABLISH RULE</button>';
+              html += '</div>';
+              return html;
             } else {
-              return '<div><h3 style="font-size: 24px; margin-bottom: 20px;">🛡️ YOU ARE THE RULE MAKER!</h3><div style="background: white; padding: 15px; border-radius: 10px; border: 2px solid black; margin-bottom: 20px;"><p style="font-size: 12px; color: #666; margin-bottom: 5px;">YOUR RULE:</p><p style="font-size: 18px; font-weight: bold;">' + gameState.rule + '</p></div><div style="background: rgba(78,205,196,0.1); padding: 20px; border-radius: 10px; border: 2px dashed #4ECDC4;"><h4 style="font-size: 14px; color: #4ECDC4; margin-bottom: 10px;">💡 GIVE A HINT</h4>' + (gameState.hint ? '<div style="background: white; padding: 10px; border-radius: 8px; border: 2px solid black; text-align: center;"><p style="font-size: 14px; font-weight: bold; color: #4ECDC4;">HINT GIVEN: ' + gameState.hint + '</p></div>' : gameState.hintAvailable ? '<div><input id="hintInput" type="text" placeholder="Type a word that fits..." style="width: 100%; padding: 10px; border: 2px solid #4ECDC4; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="50" /><button onclick="setHint()" style="background: #4ECDC4; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SEND HINT</button></div>' : '<p style="text-align: center; font-size: 12px; color: #999;">Hint available at 0:30</p>') + '</div></div>';
+              let html = '<div>';
+              html += '<h3 style="font-size: 24px; margin-bottom: 20px;">🛡️ YOU ARE THE RULE MAKER!</h3>';
+              html += '<div style="background: white; padding: 15px; border-radius: 10px; border: 2px solid black; margin-bottom: 20px;">';
+              html += '<p style="font-size: 12px; color: #666; margin-bottom: 5px;">YOUR RULE:</p>';
+              html += '<p style="font-size: 18px; font-weight: bold;">' + gameState.rule + '</p>';
+              html += '</div>';
+              html += '<div style="background: rgba(78,205,196,0.1); padding: 20px; border-radius: 10px; border: 2px dashed #4ECDC4;">';
+              html += '<h4 style="font-size: 14px; color: #4ECDC4; margin-bottom: 10px;">💡 GIVE A HINT</h4>';
+              
+              if (gameState.hint) {
+                html += '<div style="background: white; padding: 10px; border-radius: 8px; border: 2px solid black; text-align: center;">';
+                html += '<p style="font-size: 14px; font-weight: bold; color: #4ECDC4;">HINT GIVEN: ' + gameState.hint + '</p>';
+                html += '</div>';
+              } else if (gameState.hintAvailable) {
+                html += '<div>';
+                html += '<input id="hintInput" type="text" placeholder="Type a word that fits..." style="width: 100%; padding: 10px; border: 2px solid #4ECDC4; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="50" />';
+                html += '<button onclick="setHint()" style="background: #4ECDC4; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SEND HINT</button>';
+                html += '</div>';
+              } else {
+                html += '<p style="text-align: center; font-size: 12px; color: #999;">Hint available at 0:30</p>';
+              }
+              
+              html += '</div>';
+              html += '</div>';
+              return html;
             }
           }
           
           // Generate Guesser UI
           function generateGuesserUI(gameState, mySubmission, hasGuessedCorrectly, ruleMaker) {
             if (!gameState.rule) {
-              return '<div style="text-align: center; color: #999; padding: 40px;"><div style="font-size: 48px; animation: spin 2s linear infinite;">🤫</div><p style="font-size: 14px; margin-top: 10px;">Waiting for ' + (ruleMaker?.username || '???') + ' to set a rule...</p></div>';
+              let html = '<div style="text-align: center; color: #999; padding: 40px;">';
+              html += '<div style="font-size: 48px; animation: spin 2s linear infinite;">🤫</div>';
+              html += '<p style="font-size: 14px; margin-top: 10px;">Waiting for ' + (ruleMaker?.username || '???') + ' to set a rule...</p>';
+              html += '</div>';
+              return html;
             } else {
-              return '<div><h3 style="font-size: 24px; margin-bottom: 20px;">🤔 GUESS THE RULE</h3>' + (gameState.hint ? '<div style="background: rgba(78,205,196,0.2); padding: 15px; border-radius: 10px; border: 2px solid #4ECDC4; margin-bottom: 20px;"><p style="font-size: 10px; color: #4ECDC4; margin-bottom: 5px;">💡 HINT FROM ' + (ruleMaker?.username || '???') + '</p><p style="font-size: 16px; font-weight: bold;">"' + gameState.hint + '" fits the rule!</p></div>' : '') + '<div style="margin-bottom: 20px;"><p style="font-size: 14px; color: #666; margin-bottom: 10px;">Type words to find the rule!</p><input id="entryInput" type="text" placeholder="' + (mySubmission ? "Waiting for review..." : hasGuessedCorrectly ? "Word accepted!" : "Type a word...") + '" disabled="' + (!!mySubmission || hasGuessedCorrectly) + '" style="width: 100%; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; margin-bottom: 10px; ' + (mySubmission || hasGuessedCorrectly ? 'background: #f5f5f5; opacity: 0.5;' : '') + '" maxlength="50" />' + (!hasGuessedCorrectly ? '<button onclick="submitEntry()" disabled="' + (!!mySubmission) + '" style="background: ' + (mySubmission ? '#ccc' : '#4ECDC4') + '; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 16px; cursor: pointer; width: 100%; ' + (mySubmission ? 'cursor: not-allowed;' : '') + '">' + (mySubmission ? 'PENDING' : 'SUBMIT WORD') + '</button>' : '') + '</div>' + (hasGuessedCorrectly ? '<div style="background: rgba(255,217,61,0.2); padding: 20px; border-radius: 10px; border: 4px dashed #FFD93D;"><h4 style="font-size: 14px; color: #FFD93D; margin-bottom: 10px;">🏆 GUESS THE SECRET RULE!</h4><p style="font-size: 12px; color: #666; margin-bottom: 10px;">You get ONE chance to guess the rule for a bonus point!</p><input id="ruleGuessInput" type="text" placeholder="I think the rule is..." style="width: 100%; padding: 10px; border: 2px solid #FFD93D; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="100" /><button onclick="submitRuleGuess()" style="background: #FFD93D; color: black; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SUBMIT FINAL GUESS</button></div>' : '') + '</div>';
+              let html = '<div>';
+              html += '<h3 style="font-size: 24px; margin-bottom: 20px;">🤔 GUESS THE RULE</h3>';
+              
+              if (gameState.hint) {
+                html += '<div style="background: rgba(78,205,196,0.2); padding: 15px; border-radius: 10px; border: 2px solid #4ECDC4; margin-bottom: 20px;">';
+                html += '<p style="font-size: 10px; color: #4ECDC4; margin-bottom: 5px;">💡 HINT FROM ' + (ruleMaker?.username || '???') + '</p>';
+                html += '<p style="font-size: 16px; font-weight: bold;">"' + gameState.hint + '" fits the rule!</p>';
+                html += '</div>';
+              }
+              
+              html += '<div style="margin-bottom: 20px;">';
+              html += '<p style="font-size: 14px; color: #666; margin-bottom: 10px;">Type words to find the rule!</p>';
+              
+              const placeholder = mySubmission ? "Waiting for review..." : hasGuessedCorrectly ? "Word accepted!" : "Type a word...";
+              const disabled = !!mySubmission || hasGuessedCorrectly;
+              const inputStyle = mySubmission || hasGuessedCorrectly ? 'background: #f5f5f5; opacity: 0.5;' : '';
+              
+              html += '<input id="entryInput" type="text" placeholder="' + placeholder + '" disabled="' + disabled + '" ';
+              html += 'style="width: 100%; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; margin-bottom: 10px; ' + inputStyle + '" maxlength="50" />';
+              
+              if (!hasGuessedCorrectly) {
+                const buttonBg = mySubmission ? '#ccc' : '#4ECDC4';
+                const buttonCursor = mySubmission ? 'cursor: not-allowed;' : '';
+                const buttonText = mySubmission ? 'PENDING' : 'SUBMIT WORD';
+                
+                html += '<button onclick="submitEntry()" disabled="' + !!mySubmission + '" ';
+                html += 'style="background: ' + buttonBg + '; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 16px; cursor: pointer; width: 100%; ' + buttonCursor + '">';
+                html += buttonText + '</button>';
+              }
+              
+              html += '</div>';
+              
+              if (hasGuessedCorrectly) {
+                html += '<div style="background: rgba(255,217,61,0.2); padding: 20px; border-radius: 10px; border: 4px dashed #FFD93D;">';
+                html += '<h4 style="font-size: 14px; color: #FFD93D; margin-bottom: 10px;">🏆 GUESS THE SECRET RULE!</h4>';
+                html += '<p style="font-size: 12px; color: #666; margin-bottom: 10px;">You get ONE chance to guess the rule for a bonus point!</p>';
+                html += '<input id="ruleGuessInput" type="text" placeholder="I think the rule is..." ';
+                html += 'style="width: 100%; padding: 10px; border: 2px solid #FFD93D; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="100" />';
+                html += '<button onclick="submitRuleGuess()" style="background: #FFD93D; color: black; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SUBMIT FINAL GUESS</button>';
+                html += '</div>';
+              }
+              
+              html += '</div>';
+              return html;
             }
           }
           
@@ -420,7 +580,33 @@ app.get('*', (req, res) => {
               'rejected': '#FF6B9D'
             };
             
-            return '<div style="background: ' + statusColors[submission.status] + '; padding: 15px; border-radius: 10px; border: 2px solid ' + borderColors[submission.status] + '; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;"><div><p style="font-size: 10px; color: #666; margin: 0;">' + submission.username + '</p><p style="font-size: 16px; font-weight: bold; margin: 5px 0;">' + submission.text + '</p></div>' + (isRuleMaker && submission.status === 'pending' ? '<div style="display: flex; gap: 5px;"><button onclick="reviewSubmission(\'' + submission.id + '\', \'accepted\')" style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✓</button><button onclick="reviewSubmission(\'' + submission.id + '\', \'rejected\')" style="width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✗</button></div>' : '<div style="display: flex; align-items: center; gap: 5px;">' + (submission.status === 'accepted' ? '<span style="color: #4ECDC4; font-size: 20px;">✓</span>' : '') + (submission.status === 'rejected' ? '<span style="color: #FF6B9D; font-size: 20px;">✗</span>' : '') + (submission.status === 'pending' ? '<span style="font-size: 10px; color: #999;">PENDING</span>' : '') + '</div>') + '</div>';
+            let html = '<div style="background: ' + statusColors[submission.status] + '; padding: 15px; border-radius: 10px; border: 2px solid ' + borderColors[submission.status] + '; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">';
+            html += '<div>';
+            html += '<p style="font-size: 10px; color: #666; margin: 0;">' + submission.username + '</p>';
+            html += '<p style="font-size: 16px; font-weight: bold; margin: 5px 0;">' + submission.text + '</p>';
+            html += '</div>';
+            
+            if (isRuleMaker && submission.status === 'pending') {
+              html += '<div style="display: flex; gap: 5px;">';
+              html += '<button onclick="reviewSubmission(\'' + submission.id + '\', \'accepted\')" style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✓</button>';
+              html += '<button onclick="reviewSubmission(\'' + submission.id + '\', \'rejected\')" style="width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✗</button>';
+              html += '</div>';
+            } else {
+              html += '<div style="display: flex; align-items: center; gap: 5px;">';
+              if (submission.status === 'accepted') {
+                html += '<span style="color: #4ECDC4; font-size: 20px;">✓</span>';
+              }
+              if (submission.status === 'rejected') {
+                html += '<span style="color: #FF6B9D; font-size: 20px;">✗</span>';
+              }
+              if (submission.status === 'pending') {
+                html += '<span style="font-size: 10px; color: #999;">PENDING</span>';
+              }
+              html += '</div>';
+            }
+            
+            html += '</div>';
+            return html;
           }
           
           // Game action functions
