@@ -375,7 +375,8 @@ app.get('*', (req, res) => {
                 const isHost = players[0] && players[0].id === currentUserId;
                 const isRuleMaker = gameState.ruleMaker === currentUserId;
                 
-                root.innerHTML = generateHiddenRuleGameHTML(gameState, players, currentUserId, isHost, isRuleMaker, lobbyCode);
+                const gameHTML = generateHiddenRuleGameHTML(gameState, players, currentUserId, isHost, isRuleMaker, lobbyCode);
+                root.innerHTML = gameHTML;
               });
           }
           
