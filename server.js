@@ -1,18 +1,16 @@
 import express from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = new URL('', import.meta.url).pathname;
 const __dirname = path.dirname(__filename);
-console.log('Directory:', __dirname);
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, "dist");
 
+console.log('=== SIMPLE SERVER STARTING ===');
 console.log('Port:', PORT);
 console.log('Dist path:', distPath);
 
@@ -35,192 +33,137 @@ if (fs.existsSync(distAssets)) {
   console.log('Dist assets folder not found!');
 }
 
-// Socket.io setup
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
-
-// Game state
+// Simple in-memory lobby storage (no Socket.io needed)
 const lobbies = new Map();
 
 function generateCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
-// Socket handlers
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('create-lobby', (data) => {
-    const { username } = data;
-    const code = generateCode();
-    
-    const lobby = {
-      code,
-      players: [{
-        id: socket.id,
-        username,
-        isHost: true
-      }],
-      gameState: 'waiting',
-      selectedGame: 'hidden-rule',
-      settings: { roundsPerPlayer: 2 },
-      gameData: null,
-      hostId: socket.id,
-      createdAt: new Date()
-    };
-    
-    lobbies.set(code, lobby);
-    socket.join(code);
-    socket.emit('lobby-created', code);
-    socket.emit('lobby-update', lobby);
-    
-    console.log(`Lobby created: ${code} by ${username}`);
-  });
-
-  socket.on('check-lobby', (code, callback) => {
-    const exists = lobbies.has(code);
-    callback(exists);
-  });
-
-  socket.on('auto-join-room', (data) => {
-    const { roomCode, username, playerId } = data;
-    const code = roomCode.toUpperCase();
-    const lobby = lobbies.get(code);
-    
-    if (!lobby) {
-      socket.emit('error', 'Lobby not found');
-      return;
-    }
-    
-    const player = {
-      id: playerId,
-      username,
-      isHost: false
-    };
-    
-    lobby.players.push(player);
-    socket.join(code);
-    socket.emit('auto-joined', { success: true, roomCode: code });
-    io.to(code).emit('lobby-update', lobby);
-    
-    console.log(`${username} auto-joined lobby ${code}`);
-  });
-
-  socket.on('join-lobby', (data) => {
-    const { code, username, playerId } = data;
-    const lobby = lobbies.get(code);
-    
-    if (!lobby) {
-      socket.emit('error', 'Lobby not found');
-      return;
-    }
-    
-    if (lobby.players.length >= 8) {
-      socket.emit('error', 'Lobby is full');
-      return;
-    }
-    
-    const player = {
-      id: playerId,
-      username,
-      isHost: false
-    };
-    
-    lobby.players.push(player);
-    socket.join(code);
-    socket.emit('joined-lobby', lobby);
-    io.to(code).emit('lobby-update', lobby);
-    
-    console.log(`${username} joined lobby ${code}`);
-  });
-
-  socket.on('start-game', (data) => {
-    const { code, playerId } = data;
-    const lobby = lobbies.get(code);
-    
-    if (!lobby || !lobby.players[0]?.isHost || lobby.players[0]?.id !== playerId) {
-      socket.emit('error', 'Only the host can start the game');
-      return;
-    }
-    
-    lobby.gameState = 'playing';
-    lobby.gameData = {
-      ruleMaker: lobby.hostId,
-      rule: '',
-      hint: '',
-      submissions: [],
-      ruleGuesses: [],
-      correctGuessers: [],
-      currentPhase: 'rule-setting'
-    };
-    io.to(code).emit('game-started');
-    io.to(code).emit('lobby-update', lobby);
-    
-    console.log(`Game started in lobby ${code}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    
-    // Remove player from all lobbies
-    for (const [code, lobby] of lobbies.entries()) {
-      const playerIndex = lobby.players.findIndex(p => p.id === socket.id);
-      if (playerIndex !== -1) {
-        const player = lobby.players[playerIndex];
-        lobby.players.splice(playerIndex, 1);
-        
-        // If host disconnects, close the lobby
-        if (player.isHost) {
-          lobbies.delete(code);
-          io.to(code).emit('lobby-closed');
-        } else {
-          io.to(code).emit('lobby-update', lobby);
-        }
-        
-        console.log(`${player.username} left lobby ${code}`);
-        break;
-      }
-    }
-  });
-});
-
-// Basic middleware
-app.use(express.json());
-
-// Debug route
-app.get('/__debug/status', (req, res) => {
-  try {
-    res.json({
-      message: 'Server with Socket.io is running!',
-      workingDirectory: __dirname,
-      distPath: distPath,
-      distExists: fs.existsSync(distPath),
-      distFiles: fs.existsSync(distPath) ? fs.readdirSync(distPath) : 'dist not found',
-      indexExists: fs.existsSync(path.join(distPath, 'index.html')),
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.json({ error: error.message });
-  }
-});
-
-// Health check
+// API Routes
 app.get('/api/health', (req, res) => {
+  console.log('Health check hit at:', new Date().toISOString());
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Test route for debugging
 app.get('/api/test', (req, res) => {
+  console.log('Test endpoint hit at:', new Date().toISOString());
   res.json({ 
-    message: 'Server is working!', 
+    message: 'Simple server is working!', 
     path: req.path,
     method: req.method,
     timestamp: new Date().toISOString()
   });
+});
+
+app.post('/api/create-lobby', express.json({type: '*/*'}), (req, res) => {
+  try {
+    console.log('Create lobby request received at:', new Date().toISOString());
+    console.log('Request body:', req.body);
+    
+    const { username } = req.body;
+    if (!username) {
+      console.log('Error: Username required');
+      return res.status(400).json({ error: 'Username required' });
+    }
+    
+    const code = generateCode();
+    const lobby = {
+      code,
+      players: [{ username, id: 'player1' }],
+      createdAt: new Date().toISOString()
+    };
+    
+    lobbies.set(code, lobby);
+    console.log('Created lobby:', code);
+    console.log('All lobbies:', Array.from(lobbies.keys()));
+    
+    res.json({ success: true, code });
+  } catch (error) {
+    console.error('Create lobby error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to create lobby: ' + error.message });
+  }
+});
+
+app.get('/api/lobby/:code', (req, res) => {
+  try {
+    console.log('Get lobby request for code:', req.params.code);
+    const { code } = req.params;
+    const lobby = lobbies.get(code.toUpperCase());
+    
+    if (!lobby) {
+      console.log('Lobby not found:', code);
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+    
+    console.log('Found lobby:', lobby);
+    res.json(lobby);
+  } catch (error) {
+    console.error('Get lobby error:', error);
+    res.status(500).json({ error: 'Failed to get lobby' });
+  }
+});
+
+app.post('/api/join-lobby', express.json({type: '*/*'}), (req, res) => {
+  try {
+    console.log('Join lobby request received at:', new Date().toISOString());
+    console.log('Request body:', req.body);
+    
+    const { code, username } = req.body;
+    if (!code || !username) {
+      console.log('Error: Code and username required');
+      return res.status(400).json({ error: 'Code and username required' });
+    }
+    
+    const lobby = lobbies.get(code.toUpperCase());
+    if (!lobby) {
+      console.log('Lobby not found:', code);
+      return res.status(404).json({ error: 'Lobby not found' });
+    }
+    
+    const newPlayer = { username, id: 'player' + Date.now() };
+    lobby.players.push(newPlayer);
+    lobbies.set(code.toUpperCase(), lobby);
+    
+    console.log('Player joined lobby:', code, username);
+    console.log('Updated lobby:', lobby);
+    
+    res.json({ success: true, lobby });
+  } catch (error) {
+    console.error('Join lobby error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to join lobby: ' + error.message });
+  }
+});
+
+// Root endpoint to verify server
+app.get('/', (req, res) => {
+  console.log('Root endpoint hit - SIMPLE SERVER is running!');
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Simple Server Test</title>
+      <meta charset="UTF-8">
+    </head>
+    <body style="font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0;">
+      <h1>🎮 Simple Server Running!</h1>
+      <p>✅ Express server is active</p>
+      <p>✅ API endpoints are working</p>
+      <p>✅ No Socket.io dependencies</p>
+      <p><a href="/api/test" style="color: #007bff;">Test API</a></p>
+      <p><a href="/api/health" style="color: #28a745;">Health Check</a></p>
+      <hr>
+      <p><strong>Server Info:</strong></p>
+      <ul>
+        <li>Port: ${PORT}</li>
+        <li>Time: ${new Date().toISOString()}</li>
+        <li>Process: Simple Server (no Socket.io)</li>
+      </ul>
+    </body>
+    </html>
+  `);
 });
 
 // Serve static files from build output
@@ -229,45 +172,17 @@ app.use(express.static(distPath));
 // Serve assets from correct path
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 
-// Fallback to index.html with better error handling
+// Fallback to index.html
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/__debug/')) {
-    return res.status(404).send('Not found');
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).send('API endpoint not found');
   }
-  
-  const indexPath = path.join(distPath, 'index.html');
-  console.log('Serving index.html for path:', req.path);
-  console.log('Index file exists:', fs.existsSync(indexPath));
-  
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    // Fallback: serve a basic HTML page if index.html doesn't exist
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Funish Games - ${req.path}</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-      </head>
-      <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
-        <div style="text-align: center; color: white;">
-          <h1>Funish Games</h1>
-          <p>Path: ${req.path}</p>
-          <p>Server is running but index.html not found</p>
-          <button onclick="window.location.href='/'" style="background: #FF6B9D; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Go Home</button>
-        </div>
-      </body>
-      </html>
-    `);
-  }
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log('=== SERVER STARTED SUCCESSFULLY ===');
-  console.log(`Server with Socket.io running on port ${PORT}`);
+  console.log('=== SIMPLE SERVER STARTED SUCCESSFULLY ===');
+  console.log(`Server running on port ${PORT}`);
   console.log(`Serving from: ${distPath}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
