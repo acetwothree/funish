@@ -215,12 +215,23 @@ app.get("/__debug/status", (req, res) => {
   }
 });
 
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 // Serve static files from build output
 app.use(express.static(distPath));
 
 // API health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+// Simple test route
+app.get("/test", (req, res) => {
+  res.json({ message: "Server is working!", timestamp: new Date().toISOString() });
 });
 
 // Root route - serve dist/index.html
