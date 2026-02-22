@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Funish Games</title>
     <link rel="stylesheet" crossorigin href="/assets/index-ClSqbOJN.css">
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   </head>
   <body>
     <div id="root"></div>
     <script>
-      // Directly put FUNNISH landing page content
-      let socket;
-      let playerId;
+      // Simple server API - no Socket.io needed
+      let currentLobby = null;
       
       // Generate player ID
       function generatePlayerId() {
@@ -23,64 +21,77 @@
         return newId;
       }
       
-      // Initialize Socket.io connection
-      function initSocket() {
-        console.log('Initializing Socket.io...');
+      // Create lobby function
+      window.createLobby = function() {
+        console.log('Create lobby button clicked');
+        const username = document.querySelector('input[type="text"]').value;
+        console.log('Username:', username);
         
-        // Check if Socket.io is available
-        if (typeof io === 'undefined') {
-          console.error('Socket.io not loaded!');
-          alert('Socket.io not available. Please refresh the page.');
+        if (!username.trim()) {
+          alert('Enter a username!');
           return;
         }
         
-        socket = io('/', {
-          transports: ['polling'], // Use polling instead of websocket
-          upgrade: false, // Don't upgrade to websocket
-          rememberUpgrade: false
-        });
-        
-        playerId = generatePlayerId();
-        
-        socket.on('connect', () => {
-          console.log('Socket connected:', socket.id);
-          console.log('Player ID:', playerId);
-        });
-        
-        socket.on('disconnect', (reason) => {
-          console.log('Socket disconnected:', reason);
-        });
-        
-        socket.on('lobby-created', (code) => {
-          console.log('Lobby created:', code);
-          alert('Lobby created! Code: ' + code);
-          window.location.href = '/' + code;
-        });
-        
-        socket.on('joined-lobby', (lobby) => {
-          console.log('Joined lobby:', lobby);
-          // Update UI to show lobby
-          showLobbyScreen(lobby);
-        });
-        
-        socket.on('lobby-update', (lobby) => {
-          console.log('Lobby updated:', lobby);
-          // Update lobby screen with new data
-          if (document.querySelector('h2')) {
-            showLobbyScreen(lobby);
+        // Call simple server API
+        fetch('/api/create-lobby', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Lobby created:', data);
+          if (data.success) {
+            alert('Lobby created! Code: ' + data.code);
+            window.location.href = '/' + data.code;
+          } else {
+            alert('Error: ' + (data.error || 'Failed to create lobby'));
           }
+        })
+        .catch(error => {
+          console.error('Create lobby error:', error);
+          alert('Failed to create lobby. Please try again.');
         });
+      };
+      
+      // Join lobby function
+      window.joinLobby = function() {
+        const username = document.querySelector('input[type="text"]').value;
+        const lobbyCode = document.getElementById('lobbyCode').value;
         
-        socket.on('error', (message) => {
-          console.error('Socket error:', message);
-          alert('Error: ' + message);
-        });
+        if (!username.trim()) {
+          alert('Enter a username!');
+          return;
+        }
+        if (!lobbyCode.trim()) {
+          alert('Enter a lobby code!');
+          return;
+        }
         
-        socket.on('connect_error', (error) => {
-          console.error('Connection error:', error);
-          alert('Connection error: ' + error.message);
+        // Call simple server API
+        fetch('/api/join-lobby', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ code: lobbyCode.toUpperCase(), username })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Joined lobby:', data);
+          if (data.success) {
+            window.location.href = '/' + lobbyCode.toUpperCase();
+          } else {
+            alert('Error: ' + (data.error || 'Failed to join lobby'));
+          }
+        })
+        .catch(error => {
+          console.error('Join lobby error:', error);
+          alert('Failed to join lobby. Please try again.');
         });
-      }
+      };
       
       // Show lobby screen
       function showLobbyScreen(lobby) {
@@ -103,120 +114,15 @@
                   `).join('') : '<p style="color: rgba(255,255,255,0.7);">Waiting for players...</p>'}
                 </div>
               </div>
-              <button onclick="startGame()" style="background: linear-gradient(45deg, #FF6B9D, #FF8E53); color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px;">
-                🎮 Start Game
-              </button>
-              <button onclick="leaveLobby()" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-left: 10px;">
-                🚪 Leave
+              <button onclick="window.location.href='/'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">
+                🚪 Leave Lobby
               </button>
             </div>
           </div>
         `;
       }
       
-      // Create lobby function
-      window.createLobby = function() {
-        console.log('Create lobby button clicked');
-        const username = document.querySelector('input[type="text"]').value;
-        console.log('Username:', username);
-        
-        if (!username.trim()) {
-          alert('Enter a username!');
-          return;
-        }
-        
-        // Try Socket.io first
-        if (!socket) {
-          console.log('Socket not initialized, calling initSocket');
-          initSocket();
-          // Wait for socket to connect before sending request
-          socket.on('connect', () => {
-            console.log('Socket connected, sending create-lobby request');
-            createLobbyRequest(username);
-          });
-          
-          // Fallback: if socket doesn't connect in 3 seconds, use local lobby
-          setTimeout(() => {
-            if (!socket || !socket.connected) {
-              console.log('Socket failed, using local fallback');
-              createLocalLobby(username);
-            }
-          }, 3000);
-        } else if (socket.connected) {
-          console.log('Socket already connected, sending request immediately');
-          createLobbyRequest(username);
-        } else {
-          console.log('Socket exists but not connected, waiting...');
-          socket.on('connect', () => {
-            console.log('Socket reconnected, sending create-lobby request');
-            createLobbyRequest(username);
-          });
-          
-          // Fallback: if socket doesn't connect in 3 seconds, use local lobby
-          setTimeout(() => {
-            if (!socket.connected) {
-              console.log('Socket failed, using local fallback');
-              createLocalLobby(username);
-            }
-          }, 3000);
-        }
-      };
-      
-      // Separate function for actual request
-      function createLobbyRequest(username) {
-        console.log('Sending create-lobby request for:', username, 'Player ID:', playerId);
-        socket.emit('create-lobby', { username, playerId });
-      }
-      
-      // Fallback function for local lobby creation
-      function createLocalLobby(username) {
-        console.log('Creating local lobby for:', username);
-        const code = Math.random().toString(36).substring(2, 6).toUpperCase();
-        alert('Lobby created! Code: ' + code + ' (Local mode - Socket.io not available)');
-        window.location.href = '/' + code;
-      }
-      
-      // Join lobby function
-      window.joinLobby = function() {
-        const username = document.querySelector('input[type="text"]').value;
-        const lobbyCode = document.getElementById('lobbyCode').value;
-        if (!username.trim()) {
-          alert('Enter a username!');
-          return;
-        }
-        if (!lobbyCode.trim()) {
-          alert('Enter a lobby code!');
-          return;
-        }
-        
-        if (!socket) initSocket();
-        
-        console.log('Joining lobby:', lobbyCode, 'as:', username);
-        socket.emit('check-lobby', lobbyCode.toUpperCase(), (exists) => {
-          if (exists) {
-            socket.emit('join-lobby', { code: lobbyCode.toUpperCase(), username, playerId });
-          } else {
-            alert('Lobby not found! Check the code and try again.');
-          }
-        });
-      };
-      
-      // Start game function
-      window.startGame = function() {
-        if (!socket) return;
-        console.log('Starting game...');
-        socket.emit('start-game', { code: window.location.pathname.substring(1), playerId });
-      };
-      
-      // Leave lobby function
-      window.leaveLobby = function() {
-        if (!socket) return;
-        console.log('Leaving lobby...');
-        socket.disconnect();
-        window.location.href = '/';
-      };
-      
-      // Initialize the page
+      // Initialize page
       document.addEventListener('DOMContentLoaded', function() {
         const root = document.getElementById('root');
         
@@ -226,21 +132,25 @@
           const lobbyCode = window.location.pathname.substring(1).toUpperCase();
           console.log('On lobby page:', lobbyCode);
           
-          // Show lobby screen immediately (local mode)
-          const mockLobby = {
-            code: lobbyCode,
-            players: [
-              { username: document.querySelector('input[type="text"]').value || 'Player1' },
-              { username: 'Waiting for players...' }
-            ]
-          };
-          showLobbyScreen(mockLobby);
-          
-          // Also try to initialize Socket.io for real multiplayer
-          initSocket();
-          
+          // Fetch lobby data from server
+          fetch('/api/lobby/' + lobbyCode)
+            .then(response => response.json())
+            .then(lobby => {
+              if (lobby.error) {
+                alert('Lobby not found: ' + lobby.error);
+                window.location.href = '/';
+              } else {
+                showLobbyScreen(lobby);
+              }
+            })
+            .catch(error => {
+              console.error('Fetch lobby error:', error);
+              alert('Failed to load lobby. Please try again.');
+              window.location.href = '/';
+            });
+            
         } else {
-          // We're on the landing page, show the landing page
+          // We're on landing page, show landing page
           root.innerHTML = `
             <div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
               <div style="text-align: center; margin-bottom: 40px;">

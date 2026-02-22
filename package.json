@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "start": "node server.js",
+    "start": "node simple-server.js",
     "postinstall": "echo 'Dependencies installed successfully'"
   },
   "engines": {
