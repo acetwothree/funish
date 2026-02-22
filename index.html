@@ -222,8 +222,23 @@
         
         // Check if we're on a lobby page
         if (window.location.pathname !== '/') {
-          // We're on a lobby page, initialize socket and show lobby
+          // Extract lobby code from URL
+          const lobbyCode = window.location.pathname.substring(1).toUpperCase();
+          console.log('On lobby page:', lobbyCode);
+          
+          // Show lobby screen immediately (local mode)
+          const mockLobby = {
+            code: lobbyCode,
+            players: [
+              { username: document.querySelector('input[type="text"]').value || 'Player1' },
+              { username: 'Waiting for players...' }
+            ]
+          };
+          showLobbyScreen(mockLobby);
+          
+          // Also try to initialize Socket.io for real multiplayer
           initSocket();
+          
         } else {
           // We're on the landing page, show the landing page
           root.innerHTML = `
