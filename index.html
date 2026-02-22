@@ -25,6 +25,15 @@
       
       // Initialize Socket.io connection
       function initSocket() {
+        console.log('Initializing Socket.io...');
+        
+        // Check if Socket.io is available
+        if (typeof io === 'undefined') {
+          console.error('Socket.io not loaded!');
+          alert('Socket.io not available. Please refresh the page.');
+          return;
+        }
+        
         socket = io('/', {
           transports: ['websocket', 'polling'],
           upgrade: true,
@@ -35,6 +44,7 @@
         
         socket.on('connect', () => {
           console.log('Socket connected:', socket.id);
+          console.log('Player ID:', playerId);
         });
         
         socket.on('disconnect', (reason) => {
@@ -43,6 +53,7 @@
         
         socket.on('lobby-created', (code) => {
           console.log('Lobby created:', code);
+          alert('Lobby created! Code: ' + code);
           window.location.href = '/' + code;
         });
         
@@ -52,9 +63,22 @@
           showLobbyScreen(lobby);
         });
         
+        socket.on('lobby-update', (lobby) => {
+          console.log('Lobby updated:', lobby);
+          // Update lobby screen with new data
+          if (document.querySelector('h2')) {
+            showLobbyScreen(lobby);
+          }
+        });
+        
         socket.on('error', (message) => {
           console.error('Socket error:', message);
-          alert(message);
+          alert('Error: ' + message);
+        });
+        
+        socket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
+          alert('Connection error: ' + error.message);
         });
       }
       
@@ -92,17 +116,32 @@
       
       // Create lobby function
       window.createLobby = function() {
+        console.log('Create lobby button clicked');
         const username = document.querySelector('input[type="text"]').value;
+        console.log('Username:', username);
+        
         if (!username.trim()) {
           alert('Enter a username!');
           return;
         }
         
-        if (!socket) initSocket();
-        
-        console.log('Creating lobby for:', username);
-        socket.emit('create-lobby', { username, playerId });
+        if (!socket) {
+          console.log('Socket not initialized, calling initSocket');
+          initSocket();
+          // Wait a moment for socket to connect
+          setTimeout(() => {
+            createLobbyRequest(username);
+          }, 1000);
+        } else {
+          createLobbyRequest(username);
+        }
       };
+      
+      // Separate function for the actual request
+      function createLobbyRequest(username) {
+        console.log('Sending create-lobby request for:', username, 'Player ID:', playerId);
+        socket.emit('create-lobby', { username, playerId });
+      }
       
       // Join lobby function
       window.joinLobby = function() {
