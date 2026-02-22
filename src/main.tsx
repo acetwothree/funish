@@ -1,7 +1,7 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
-import './index.css';
+// import './index.css'; // Commented out to test
 
 console.log('main.tsx is running');
 console.log('Root element:', document.getElementById('root'));
