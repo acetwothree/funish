@@ -589,9 +589,17 @@ app.get('*', (req, res) => {
             
             if (isRuleMaker && submission.status === 'pending') {
               html += '<div style="display: flex; gap: 5px;">';
-              html += '<button onclick="reviewSubmission(\'' + submission.id + '\', \'accepted\')" style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✓</button>';
-              html += '<button onclick="reviewSubmission(\'' + submission.id + '\', \'rejected\')" style="width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✗</button>';
+              html += '<button id="accept-' + submission.id + '" class="review-btn accept-btn" style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✓</button>';
+              html += '<button id="reject-' + submission.id + '" class="review-btn reject-btn" style="width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✗</button>';
               html += '</div>';
+              
+              // Add event listeners after setting innerHTML
+              setTimeout(() => {
+                const acceptBtn = document.getElementById('accept-' + submission.id);
+                const rejectBtn = document.getElementById('reject-' + submission.id);
+                if (acceptBtn) acceptBtn.onclick = () => reviewSubmission(submission.id, 'accepted');
+                if (rejectBtn) rejectBtn.onclick = () => reviewSubmission(submission.id, 'rejected');
+              }, 100);
             } else {
               html += '<div style="display: flex; align-items: center; gap: 5px;">';
               if (submission.status === 'accepted') {
