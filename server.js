@@ -210,7 +210,17 @@ app.get('/__debug/status', (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Test route for debugging
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Server is working!', 
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Serve static files from build output
@@ -219,12 +229,40 @@ app.use(express.static(distPath));
 // Serve assets from correct path
 app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 
-// Fallback to index.html
+// Fallback to index.html with better error handling
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/__debug/')) {
     return res.status(404).send('Not found');
   }
-  res.sendFile(path.join(distPath, 'index.html'));
+  
+  const indexPath = path.join(distPath, 'index.html');
+  console.log('Serving index.html for path:', req.path);
+  console.log('Index file exists:', fs.existsSync(indexPath));
+  
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // Fallback: serve a basic HTML page if index.html doesn't exist
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Funish Games - ${req.path}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+      </head>
+      <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+        <div style="text-align: center; color: white;">
+          <h1>Funish Games</h1>
+          <p>Path: ${req.path}</p>
+          <p>Server is running but index.html not found</p>
+          <button onclick="window.location.href='/'" style="background: #FF6B9D; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Go Home</button>
+        </div>
+      </body>
+      </html>
+    `);
+  }
 });
 
 httpServer.listen(PORT, '0.0.0.0', () => {
