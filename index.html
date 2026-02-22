@@ -128,12 +128,20 @@
         if (!socket) {
           console.log('Socket not initialized, calling initSocket');
           initSocket();
-          // Wait a moment for socket to connect
-          setTimeout(() => {
+          // Wait for socket to connect before sending request
+          socket.on('connect', () => {
+            console.log('Socket connected, sending create-lobby request');
             createLobbyRequest(username);
-          }, 1000);
-        } else {
+          });
+        } else if (socket.connected) {
+          console.log('Socket already connected, sending request immediately');
           createLobbyRequest(username);
+        } else {
+          console.log('Socket exists but not connected, waiting...');
+          socket.on('connect', () => {
+            console.log('Socket reconnected, sending create-lobby request');
+            createLobbyRequest(username);
+          });
         }
       };
       
