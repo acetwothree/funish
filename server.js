@@ -477,7 +477,7 @@ app.get('*', (req, res) => {
               html += '<li>"Words that end with a vowel" (Pizza, Radio)</li>';
               html += '</ul>';
               html += '</div>';
-              html += '<textarea id="ruleInput" placeholder="Enter your secret rule..." style="width: 100%; height: 80px; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; resize: none; margin-bottom: 15px;" maxlength="200"></textarea>';
+              html += '<textarea id="ruleInput" placeholder=\"Enter your secret rule...\" style="width: 100%; height: 80px; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; resize: none; margin-bottom: 15px;" maxlength="200"></textarea>';
               html += '<button onclick="setRule()" style="background: #FFD93D; color: black; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%;">ESTABLISH RULE</button>';
               html += '</div>';
               return html;
@@ -497,7 +497,7 @@ app.get('*', (req, res) => {
                 html += '</div>';
               } else if (gameState.hintAvailable) {
                 html += '<div>';
-                html += '<input id="hintInput" type="text" placeholder="Type a word that fits..." style="width: 100%; padding: 10px; border: 2px solid #4ECDC4; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="50" />';
+                html += '<input id="hintInput" type="text" placeholder=\"Type a word that fits...\" style="width: 100%; padding: 10px; border: 2px solid #4ECDC4; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="50" />';
                 html += '<button onclick="setHint()" style="background: #4ECDC4; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SEND HINT</button>';
                 html += '</div>';
               } else {
@@ -525,14 +525,14 @@ app.get('*', (req, res) => {
               if (gameState.hint) {
                 html += '<div style="background: rgba(78,205,196,0.2); padding: 15px; border-radius: 10px; border: 2px solid #4ECDC4; margin-bottom: 20px;">';
                 html += '<p style="font-size: 10px; color: #4ECDC4; margin-bottom: 5px;">💡 HINT FROM ' + (ruleMaker && ruleMaker.username ? ruleMaker.username : '???') + '</p>';
-                html += '<p style="font-size: 16px; font-weight: bold;">"' + gameState.hint + '" fits the rule!</p>';
+                html += '<p style="font-size: 16px; font-weight: bold;">\"' + gameState.hint + '\" fits the rule!</p>';
                 html += '</div>';
               }
               
               html += '<div style="margin-bottom: 20px;">';
               html += '<p style="font-size: 14px; color: #666; margin-bottom: 10px;">Type words to find the rule!</p>';
               
-              const placeholder = mySubmission ? "Waiting for review..." : hasGuessedCorrectly ? "Word accepted!" : "Type a word...";
+              const placeholder = mySubmission ? 'Waiting for review...' : hasGuessedCorrectly ? 'Word accepted!' : 'Type a word...';
               const disabled = !!mySubmission || hasGuessedCorrectly;
               const inputStyle = mySubmission || hasGuessedCorrectly ? 'background: #f5f5f5; opacity: 0.5;' : '';
               
@@ -555,7 +555,7 @@ app.get('*', (req, res) => {
                 html += '<div style="background: rgba(255,217,61,0.2); padding: 20px; border-radius: 10px; border: 4px dashed #FFD93D;">';
                 html += '<h4 style="font-size: 14px; color: #FFD93D; margin-bottom: 10px;">🏆 GUESS THE SECRET RULE!</h4>';
                 html += '<p style="font-size: 12px; color: #666; margin-bottom: 10px;">You get ONE chance to guess the rule for a bonus point!</p>';
-                html += '<input id="ruleGuessInput" type="text" placeholder="I think the rule is..." ';
+                html += '<input id="ruleGuessInput" type="text" placeholder=\"I think the rule is...\" ';
                 html += 'style="width: 100%; padding: 10px; border: 2px solid #FFD93D; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="100" />';
                 html += '<button onclick="submitRuleGuess()" style="background: #FFD93D; color: black; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SUBMIT FINAL GUESS</button>';
                 html += '</div>';
