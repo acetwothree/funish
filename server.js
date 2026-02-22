@@ -221,8 +221,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from build output
-app.use(express.static(distPath));
+// Serve static files from build output with correct MIME types
+app.use(express.static(distPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    }
+  }
+}));
 
 // API health check
 app.get("/api/health", (req, res) => {
