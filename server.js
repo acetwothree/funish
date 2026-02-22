@@ -1,7 +1,10 @@
-const express = require('express');
-const path = require('path');
-const http = require('http');
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, 'dist');
@@ -11,7 +14,6 @@ app.use(express.json());
 
 // Debug route
 app.get('/__debug/status', (req, res) => {
-  const fs = require('fs');
   try {
     res.json({
       message: 'Simple server is running!',
@@ -43,8 +45,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-const server = http.createServer(app);
-server.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Simple server running on port ${PORT}`);
   console.log(`Serving from: ${distPath}`);
 });
