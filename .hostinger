@@ -1,0 +1,19 @@
+# Hostinger Deployment Configuration
+
+# Node.js Version
+node_version=18
+
+# Start Command
+start_command=node server.js
+
+# Port Configuration
+port=3000
+
+# Environment Variables
+NODE_ENV=production
+
+# Install Dependencies
+npm_install=true
+
+# Build Command
+build_command=npm run build

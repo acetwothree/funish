@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
   "engines": {
     "node": ">=18.0.0"
