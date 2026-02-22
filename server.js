@@ -274,7 +274,7 @@ app.get('*', (req, res) => {
               
               console.log('Generated player HTML:', playerHtml);
               
-              root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 600px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Share this code with your friends!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (' + playerCount + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + playerHtml + '</div></div><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Lobby</button></div></div>';
+              root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 600px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Share this code with your friends!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (' + playerCount + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + playerHtml + '</div></div>' + (playerCount >= 2 ? '<button onclick="startHiddenRuleGame()" style="background: linear-gradient(45deg, #4ECDC4, #44A08D); color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 10px;">🎮 Start Hidden Rule Game</button>' : '<p style="color: rgba(255,255,255,0.7); margin-bottom: 10px;">Need at least 2 players to start</p>') + '<button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Lobby</button></div></div>';
               
               // Set up auto-refresh for host to see new players
               setupAutoRefresh(lobby.code);
@@ -324,6 +324,216 @@ app.get('*', (req, res) => {
                   console.error('Auto-refresh error:', error);
                 });
             }, 3000); // Refresh every 3 seconds
+          }
+          
+          // Start Hidden Rule Game function
+          window.startHiddenRuleGame = function() {
+            const lobbyCode = window.location.pathname.substring(1).toUpperCase();
+            console.log('Starting Hidden Rule Game for lobby:', lobbyCode);
+            
+            // Initialize game state
+            const gameState = {
+              phase: 'rule-setting',
+              ruleMaker: lobbyCode === 'HOST' ? lobbyCode : lobbyCode, // First player becomes rule maker
+              rule: '',
+              hint: '',
+              hintAvailable: false,
+              timer: 60,
+              timerStarted: false,
+              roundOver: false,
+              submissions: [],
+              ruleGuesses: [],
+              correctGuessers: [],
+              currentRound: 1,
+              totalRounds: 3,
+              revealing: false,
+              transitioning: false
+            };
+            
+            // Store game state in sessionStorage for persistence
+            sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+            
+            // Clear auto-refresh and show game
+            if (window.lobbyRefreshInterval) {
+              clearInterval(window.lobbyRefreshInterval);
+            }
+            
+            showHiddenRuleGame(gameState);
+          };
+          
+          // Show Hidden Rule Game
+          function showHiddenRuleGame(gameState) {
+            const root = document.getElementById('root');
+            const lobbyCode = window.location.pathname.substring(1).toUpperCase();
+            const currentUserId = generatePlayerId();
+            
+            // Get current lobby data
+            fetch('/api/lobby/' + lobbyCode)
+              .then(response => response.json())
+              .then(lobby => {
+                const players = lobby.players || [];
+                const isHost = players[0]?.id === currentUserId;
+                const isRuleMaker = gameState.ruleMaker === currentUserId;
+                
+                root.innerHTML = generateHiddenRuleGameHTML(gameState, players, currentUserId, isHost, isRuleMaker, lobbyCode);
+              });
+          }
+          
+          // Generate Hidden Rule Game HTML (adapted from original React component)
+          function generateHiddenRuleGameHTML(gameState, players, currentUserId, isHost, isRuleMaker, lobbyCode) {
+            const ruleMaker = players.find(p => p.id === gameState.ruleMaker);
+            const mySubmission = gameState.submissions.find(s => s.playerId === currentUserId && s.status === 'pending');
+            const hasGuessedCorrectly = gameState.correctGuessers.includes(currentUserId);
+            
+            return '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; padding: 20px;"><div style="max-width: 1200px; margin: 0 auto; position: relative;"><div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;"><div style="background: #FF6B9D; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden;"><span style="color: white; font-size: 24px;">🛡️</span><div style="text-align: center; color: white;"><p style="font-size: 10px; margin: 0; opacity: 0.8;">RULE MAKER</p><p style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">' + (ruleMaker?.username || '???') + '</p></div>' + (isRuleMaker ? '<div style="position: absolute; inset: 0; background: rgba(255,255,255,0.2); animation: pulse 2s infinite;"></div>' : '') + '</div><div style="background: white; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;"><span style="color: #4ECDC4; font-size: 24px;">⏰</span><div style="text-align: center;"><p style="font-size: 10px; color: #666; margin: 0;">' + (gameState.roundOver ? 'STATUS' : !gameState.timerStarted ? 'WAITING' : 'TIME LEFT') + '</p><p style="font-size: 24px; font-weight: bold; margin: 0; color: ' + (gameState.timer <= 10 && !gameState.roundOver ? '#FF6B9D' : 'black') + ';">' + (gameState.roundOver ? 'WAITING FOR RULE GUESSES' : !gameState.timerStarted ? 'RULE...' : '0:' + gameState.timer.toString().padStart(2, '0')) + '</p></div></div><div style="background: #FFD93D; padding: 20px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;"><span style="color: black; font-size: 24px;">⭐</span><div style="text-align: center;"><p style="font-size: 10px; color: rgba(0,0,0,0.6); margin: 0;">ROUND</p><p style="font-size: 24px; font-weight: bold; margin: 0;">' + gameState.currentRound + ' / ' + gameState.totalRounds + '</p></div></div></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;"><div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid black;">' + (isRuleMaker ? generateRuleMakerUI(gameState) : generateGuesserUI(gameState, mySubmission, hasGuessedCorrectly, ruleMaker)) + '</div><div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid black; min-height: 500px;"><h3 style="font-size: 24px; margin-bottom: 20px;">SUBMISSIONS</h3><div style="max-height: 600px; overflow-y: auto;">' + (gameState.submissions.length === 0 ? '<p style="text-align: center; color: #999; font-style: italic; padding: 40px;">No submissions yet...</p>' : gameState.submissions.slice().reverse().map(sub => generateSubmissionHTML(sub, isRuleMaker)).join('')) + '</div></div></div><div style="text-align: center; margin-top: 30px;"><button onclick="window.location.href=\'/'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Game</button></div></div></div>';
+          }
+          
+          // Generate Rule Maker UI
+          function generateRuleMakerUI(gameState) {
+            if (!gameState.rule) {
+              return '<div><h3 style="font-size: 24px; margin-bottom: 20px;">🛡️ YOU ARE THE RULE MAKER!</h3><div style="background: rgba(255,107,157,0.1); padding: 15px; border-radius: 10px; border: 2px solid #FF6B9D; margin-bottom: 20px;"><p style="font-size: 12px; color: #FF6B9D; font-weight: bold;">🤫 SHHH! DO NOT TALK OUT LOUD!</p></div><div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; border: 2px dashed #4ECDC4; margin-bottom: 20px;"><p style="font-size: 10px; color: #4ECDC4; margin-bottom: 10px;">CREATIVE EXAMPLES:</p><ul style="font-size: 12px; color: #666; margin: 0; padding-left: 20px;"><li>"Words that contain a double letter" (Apple, Moon)</li><li>"Words that are things you can find in a kitchen" (Fork, Oven)</li><li>"Words that end with a vowel" (Pizza, Radio)</li></ul></div><textarea id="ruleInput" placeholder="Enter your secret rule..." style="width: 100%; height: 80px; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; resize: none; margin-bottom: 15px;" maxlength="200"></textarea><button onclick="setRule()" style="background: #FFD93D; color: black; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%;">ESTABLISH RULE</button></div>';
+            } else {
+              return '<div><h3 style="font-size: 24px; margin-bottom: 20px;">🛡️ YOU ARE THE RULE MAKER!</h3><div style="background: white; padding: 15px; border-radius: 10px; border: 2px solid black; margin-bottom: 20px;"><p style="font-size: 12px; color: #666; margin-bottom: 5px;">YOUR RULE:</p><p style="font-size: 18px; font-weight: bold;">' + gameState.rule + '</p></div><div style="background: rgba(78,205,196,0.1); padding: 20px; border-radius: 10px; border: 2px dashed #4ECDC4;"><h4 style="font-size: 14px; color: #4ECDC4; margin-bottom: 10px;">💡 GIVE A HINT</h4>' + (gameState.hint ? '<div style="background: white; padding: 10px; border-radius: 8px; border: 2px solid black; text-align: center;"><p style="font-size: 14px; font-weight: bold; color: #4ECDC4;">HINT GIVEN: ' + gameState.hint + '</p></div>' : gameState.hintAvailable ? '<div><input id="hintInput" type="text" placeholder="Type a word that fits..." style="width: 100%; padding: 10px; border: 2px solid #4ECDC4; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="50" /><button onclick="setHint()" style="background: #4ECDC4; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SEND HINT</button></div>' : '<p style="text-align: center; font-size: 12px; color: #999;">Hint available at 0:30</p>') + '</div></div>';
+            }
+          }
+          
+          // Generate Guesser UI
+          function generateGuesserUI(gameState, mySubmission, hasGuessedCorrectly, ruleMaker) {
+            if (!gameState.rule) {
+              return '<div style="text-align: center; color: #999; padding: 40px;"><div style="font-size: 48px; animation: spin 2s linear infinite;">🤫</div><p style="font-size: 14px; margin-top: 10px;">Waiting for ' + (ruleMaker?.username || '???') + ' to set a rule...</p></div>';
+            } else {
+              return '<div><h3 style="font-size: 24px; margin-bottom: 20px;">🤔 GUESS THE RULE</h3>' + (gameState.hint ? '<div style="background: rgba(78,205,196,0.2); padding: 15px; border-radius: 10px; border: 2px solid #4ECDC4; margin-bottom: 20px;"><p style="font-size: 10px; color: #4ECDC4; margin-bottom: 5px;">💡 HINT FROM ' + (ruleMaker?.username || '???') + '</p><p style="font-size: 16px; font-weight: bold;">"' + gameState.hint + '" fits the rule!</p></div>' : '') + '<div style="margin-bottom: 20px;"><p style="font-size: 14px; color: #666; margin-bottom: 10px;">Type words to find the rule!</p><input id="entryInput" type="text" placeholder="' + (mySubmission ? "Waiting for review..." : hasGuessedCorrectly ? "Word accepted!" : "Type a word...") + '" disabled="' + (!!mySubmission || hasGuessedCorrectly) + '" style="width: 100%; padding: 15px; border: 2px solid #4ECDC4; border-radius: 10px; font-size: 16px; margin-bottom: 10px; ' + (mySubmission || hasGuessedCorrectly ? 'background: #f5f5f5; opacity: 0.5;' : '') + '" maxlength="50" />' + (!hasGuessedCorrectly ? '<button onclick="submitEntry()" disabled="' + (!!mySubmission) + '" style="background: ' + (mySubmission ? '#ccc' : '#4ECDC4') + '; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 16px; cursor: pointer; width: 100%; ' + (mySubmission ? 'cursor: not-allowed;' : '') + '">' + (mySubmission ? 'PENDING' : 'SUBMIT WORD') + '</button>' : '') + '</div>' + (hasGuessedCorrectly ? '<div style="background: rgba(255,217,61,0.2); padding: 20px; border-radius: 10px; border: 4px dashed #FFD93D;"><h4 style="font-size: 14px; color: #FFD93D; margin-bottom: 10px;">🏆 GUESS THE SECRET RULE!</h4><p style="font-size: 12px; color: #666; margin-bottom: 10px;">You get ONE chance to guess the rule for a bonus point!</p><input id="ruleGuessInput" type="text" placeholder="I think the rule is..." style="width: 100%; padding: 10px; border: 2px solid #FFD93D; border-radius: 8px; font-size: 14px; margin-bottom: 10px;" maxlength="100" /><button onclick="submitRuleGuess()" style="background: #FFD93D; color: black; border: none; padding: 10px 20px; border-radius: 8px; font-size: 12px; cursor: pointer; width: 100%;">SUBMIT FINAL GUESS</button></div>' : '') + '</div>';
+            }
+          }
+          
+          // Generate Submission HTML
+          function generateSubmissionHTML(submission, isRuleMaker) {
+            const statusColors = {
+              'pending': '#f5f5f5',
+              'accepted': 'rgba(76,205,196,0.2)',
+              'rejected': 'rgba(255,107,157,0.2)'
+            };
+            
+            const borderColors = {
+              'pending': '#ccc',
+              'accepted': '#4ECDC4',
+              'rejected': '#FF6B9D'
+            };
+            
+            return '<div style="background: ' + statusColors[submission.status] + '; padding: 15px; border-radius: 10px; border: 2px solid ' + borderColors[submission.status] + '; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;"><div><p style="font-size: 10px; color: #666; margin: 0;">' + submission.username + '</p><p style="font-size: 16px; font-weight: bold; margin: 5px 0;">' + submission.text + '</p></div>' + (isRuleMaker && submission.status === 'pending' ? '<div style="display: flex; gap: 5px;"><button onclick="reviewSubmission(\'' + submission.id + '\', \'accepted\')" style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✓</button><button onclick="reviewSubmission(\'' + submission.id + '\', \'rejected\')" style="width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✗</button></div>' : '<div style="display: flex; align-items: center; gap: 5px;">' + (submission.status === 'accepted' ? '<span style="color: #4ECDC4; font-size: 20px;">✓</span>' : '') + (submission.status === 'rejected' ? '<span style="color: #FF6B9D; font-size: 20px;">✗</span>' : '') + (submission.status === 'pending' ? '<span style="font-size: 10px; color: #999;">PENDING</span>' : '') + '</div>') + '</div>';
+          }
+          
+          // Game action functions
+          window.setRule = function() {
+            const ruleInput = document.getElementById('ruleInput').value;
+            if (!ruleInput.trim()) return;
+            
+            const gameState = JSON.parse(sessionStorage.getItem('hiddenRuleGameState') || '{}');
+            gameState.rule = ruleInput;
+            gameState.timerStarted = true;
+            
+            // Start timer
+            startGameTimer(gameState);
+            
+            sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+            showHiddenRuleGame(gameState);
+          };
+          
+          window.setHint = function() {
+            const hintInput = document.getElementById('hintInput').value;
+            if (!hintInput.trim()) return;
+            
+            const gameState = JSON.parse(sessionStorage.getItem('hiddenRuleGameState') || '{}');
+            gameState.hint = hintInput;
+            
+            sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+            showHiddenRuleGame(gameState);
+          };
+          
+          window.submitEntry = function() {
+            const entryInput = document.getElementById('entryInput').value;
+            if (!entryInput.trim()) return;
+            
+            const gameState = JSON.parse(sessionStorage.getItem('hiddenRuleGameState') || '{}');
+            const currentUserId = generatePlayerId();
+            
+            // Add submission
+            const submission = {
+              id: Date.now().toString(),
+              playerId: currentUserId,
+              username: 'Player ' + currentUserId.substring(0, 4),
+              text: entryInput,
+              status: 'pending'
+            };
+            
+            gameState.submissions.push(submission);
+            sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+            
+            // Clear input
+            document.getElementById('entryInput').value = '';
+            
+            showHiddenRuleGame(gameState);
+          };
+          
+          window.submitRuleGuess = function() {
+            const ruleGuessInput = document.getElementById('ruleGuessInput').value;
+            if (!ruleGuessInput.trim()) return;
+            
+            const gameState = JSON.parse(sessionStorage.getItem('hiddenRuleGameState') || '{}');
+            const currentUserId = generatePlayerId();
+            
+            // Add rule guess
+            const ruleGuess = {
+              playerId: currentUserId,
+              username: 'Player ' + currentUserId.substring(0, 4),
+              guess: ruleGuessInput,
+              status: 'pending'
+            };
+            
+            gameState.ruleGuesses.push(ruleGuess);
+            sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+            
+            showHiddenRuleGame(gameState);
+          };
+          
+          window.reviewSubmission = function(submissionId, status) {
+            const gameState = JSON.parse(sessionStorage.getItem('hiddenRuleGameState') || '{}');
+            const submission = gameState.submissions.find(s => s.id === submissionId);
+            
+            if (submission) {
+              submission.status = status;
+              
+              if (status === 'accepted') {
+                // Add to correct guessers
+                gameState.correctGuessers.push(submission.playerId);
+              }
+              
+              sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+              showHiddenRuleGame(gameState);
+            }
+          };
+          
+          // Game timer
+          function startGameTimer(gameState) {
+            const timerInterval = setInterval(() => {
+              gameState.timer--;
+              
+              if (gameState.timer <= 30 && !gameState.hintAvailable) {
+                gameState.hintAvailable = true;
+              }
+              
+              if (gameState.timer <= 0) {
+                clearInterval(timerInterval);
+                gameState.roundOver = true;
+              }
+              
+              sessionStorage.setItem('hiddenRuleGameState', JSON.stringify(gameState));
+              showHiddenRuleGame(gameState);
+              
+              if (gameState.timer <= 0) {
+                clearInterval(timerInterval);
+              }
+            }, 1000);
           }
           
           // Join this lobby function
