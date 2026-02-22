@@ -232,19 +232,18 @@ app.get('*', (req, res) => {
           function showLobbyScreen(lobby) {
             const root = document.getElementById('root');
             
-            // Check if current user is already in lobby
-            const currentUserId = generatePlayerId();
-            const userInLobby = lobby.players && lobby.players.some(player => player.id === currentUserId);
+            // Simple check: if there are players, show join interface to newcomers
+            // The first player (host) will always be in the players array
+            const shouldShowJoinInterface = lobby.players && lobby.players.length > 0;
             
-            console.log('Current user ID:', currentUserId);
+            console.log('Should show join interface:', shouldShowJoinInterface);
             console.log('Players in lobby:', lobby.players);
-            console.log('User in lobby:', userInLobby);
             
-            if (userInLobby) {
-              // User is already in lobby, show normal lobby view
-              root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 600px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Share this code with your friends!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (' + (lobby.players ? lobby.players.length : 0) + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + (lobby.players ? lobby.players.map(player => '<div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;"><div style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin: 0 auto 10px;">' + player.username[0].toUpperCase() + '</div><div style="color: white; font-weight: bold;">' + player.username + '</div></div>').join('') : '<p style="color: rgba(255,255,255,0.7);">Waiting for players...</p>') + '</div></div><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Lobby</button></div></div>';
+            if (!shouldShowJoinInterface) {
+              // No players yet, show simple waiting screen
+              root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 500px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 30px;">Waiting for players to join...</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (0)</h3><p style="color: rgba(255,255,255,0.7);">No players yet</p></div><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Back to Main</button></div></div>';
             } else {
-              // User is not in lobby, show join interface
+              // There are players, show join interface for newcomers
               const playerCount = lobby.players ? lobby.players.length : 0;
               console.log('Player count calculated:', playerCount);
               
