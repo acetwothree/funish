@@ -135,7 +135,7 @@ app.post('/api/join-lobby', express.json({type: '*/*'}), (req, res) => {
   }
 });
 
-// Root endpoint to verify server
+// Root endpoint to verify server - MUST come before static serving
 app.get('/', (req, res) => {
   console.log('Root endpoint hit - SIMPLE SERVER is running!');
   res.send(`
@@ -160,12 +160,32 @@ app.get('/', (req, res) => {
         <li>Time: ${new Date().toISOString()}</li>
         <li>Process: Simple Server (CommonJS)</li>
       </ul>
+      <hr>
+      <p><strong>Test Create Lobby:</strong></p>
+      <button onclick="testCreateLobby()" style="background: #FF6B9D; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Test Create Lobby</button>
+      <div id="result"></div>
+      <script>
+        function testCreateLobby() {
+          fetch('/api/create-lobby', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: 'TestUser' })
+          })
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('result').innerHTML = '<p style="color: green;">✅ Lobby created: ' + data.code + '</p>';
+          })
+          .catch(error => {
+            document.getElementById('result').innerHTML = '<p style="color: red;">❌ Error: ' + error.message + '</p>';
+          });
+        }
+      </script>
     </body>
     </html>
   `);
 });
 
-// Serve static files from build output
+// Serve static files from build output (after root route)
 app.use(express.static(distPath));
 
 // Serve assets from correct path
