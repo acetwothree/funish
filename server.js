@@ -231,8 +231,52 @@ app.get('*', (req, res) => {
           // Show lobby screen
           function showLobbyScreen(lobby) {
             const root = document.getElementById('root');
-            root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 600px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Share this code with your friends!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (' + (lobby.players ? lobby.players.length : 0) + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + (lobby.players ? lobby.players.map(player => '<div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;"><div style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin: 0 auto 10px;">' + player.username[0].toUpperCase() + '</div><div style="color: white; font-weight: bold;">' + player.username + '</div></div>').join('') : '<p style="color: rgba(255,255,255,0.7);">Waiting for players...</p>') + '</div></div><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Lobby</button></div></div>';
+            
+            // Check if current user is already in the lobby
+            const currentUserId = generatePlayerId();
+            const userInLobby = lobby.players && lobby.players.some(player => player.id === currentUserId);
+            
+            if (userInLobby) {
+              // User is already in lobby, show normal lobby view
+              root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 600px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 20px;">Share this code with your friends!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS (' + (lobby.players ? lobby.players.length : 0) + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + (lobby.players ? lobby.players.map(player => '<div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;"><div style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin: 0 auto 10px;">' + player.username[0].toUpperCase() + '</div><div style="color: white; font-weight: bold;">' + player.username + '</div></div>').join('') : '<p style="color: rgba(255,255,255,0.7);">Waiting for players...</p>') + '</div></div><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer;">🚪 Leave Lobby</button></div></div>';
+            } else {
+              // User is not in lobby, show join interface
+              root.innerHTML = '<div style="min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;"><div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; text-align: center; max-width: 500px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.1);"><h2 style="font-size: 36px; color: white; margin-bottom: 20px;">JOIN LOBBY: ' + lobby.code + '</h2><p style="color: rgba(255,255,255,0.9); margin-bottom: 30px;">Your friend is waiting for you!</p><div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin-bottom: 20px;"><h3 style="color: white; margin-bottom: 15px;">PLAYERS IN LOBBY (' + (lobby.players ? lobby.players.length : 0) + ')</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">' + (lobby.players ? lobby.players.map(player => '<div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center;"><div style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin: 0 auto 10px;">' + player.username[0].toUpperCase() + '</div><div style="color: white; font-weight: bold;">' + player.username + '</div></div>').join('') : '<p style="color: rgba(255,255,255,0.7);">Waiting for players...</p>') + '</div></div><div style="margin-bottom: 20px;"><label style="display: block; font-weight: bold; margin-bottom: 8px; color: white;">Your Name</label><input type="text" id="joinUsername" placeholder="Enter your name" style="width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 16px; box-sizing: border-box;" /></div><button onclick="joinThisLobby()" style="background: linear-gradient(45deg, #4ECDC4, #44A08D); color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%;">👥 Join Lobby</button><button onclick="window.location.href=\'/\'" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 10px;">🚪 Back to Main</button></div></div>';
+            }
           }
+          
+          // Join this lobby function
+          window.joinThisLobby = function() {
+            const username = document.getElementById('joinUsername').value;
+            
+            if (!username.trim()) {
+              alert('Enter your name!');
+              return;
+            }
+            
+            // Call join lobby API
+            fetch('/api/join-lobby', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ code: '${lobbyCode}', username })
+            })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Joined lobby:', data);
+              if (data.success) {
+                // Reload the page to show updated lobby
+                window.location.reload();
+              } else {
+                alert('Error: ' + (data.error || 'Failed to join lobby'));
+              }
+            })
+            .catch(error => {
+              console.error('Join lobby error:', error);
+              alert('Failed to join lobby. Please try again.');
+            });
+          };
           
           // Initialize page
           document.addEventListener('DOMContentLoaded', function() {
