@@ -265,6 +265,7 @@ app.get('*', (req, res) => {
               const playerCount = lobby.players ? lobby.players.length : 0;
               console.log('Showing HOST view - user is in lobby');
               console.log('Player data structure:', JSON.stringify(lobby.players, null, 2));
+              console.log('Player count calculation:', lobby.players, '->', lobby.players.length, '->', playerCount);
               
               // Generate player HTML and log it
               const playerHtml = lobby.players && lobby.players.length > 0 ? 
@@ -279,6 +280,7 @@ app.get('*', (req, res) => {
               const playerCount = lobby.players ? lobby.players.length : 0;
               console.log('Showing VISITOR view - user not in lobby');
               console.log('Player data structure:', JSON.stringify(lobby.players, null, 2));
+              console.log('Player count calculation:', lobby.players, '->', lobby.players.length, '->', playerCount);
               
               // Generate player HTML and log it
               const playerHtml = lobby.players && lobby.players.length > 0 ? 
