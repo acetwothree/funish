@@ -1,10 +1,8 @@
-import express from 'express';
-import { createServer } from 'http';
-import path from 'path';
-import fs from 'fs';
+const express = require('express');
+const { createServer } = require('http');
+const path = require('path');
+const fs = require('fs');
 
-const __filename = new URL('', import.meta.url).pathname;
-const __dirname = path.dirname(__filename);
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
@@ -152,6 +150,7 @@ app.get('/', (req, res) => {
       <p>✅ Express server is active</p>
       <p>✅ API endpoints are working</p>
       <p>✅ No Socket.io dependencies</p>
+      <p>✅ CommonJS Module System</p>
       <p><a href="/api/test" style="color: #007bff;">Test API</a></p>
       <p><a href="/api/health" style="color: #28a745;">Health Check</a></p>
       <hr>
@@ -159,7 +158,7 @@ app.get('/', (req, res) => {
       <ul>
         <li>Port: ${PORT}</li>
         <li>Time: ${new Date().toISOString()}</li>
-        <li>Process: Simple Server (no Socket.io)</li>
+        <li>Process: Simple Server (CommonJS)</li>
       </ul>
     </body>
     </html>

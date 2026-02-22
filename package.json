@@ -2,10 +2,9 @@
   "name": "funish-games",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "build": "vite build",
-    "start": "node simple-server.js",
+    "start": "node server.js",
     "postinstall": "echo 'Dependencies installed successfully'"
   },
   "engines": {
