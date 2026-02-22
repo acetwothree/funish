@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Funish Games - Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        h1 { color: white; margin-bottom: 20px; }
+        .status { 
+            color: #4ECDC4; 
+            font-weight: bold; 
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .error { 
+            color: #FF6B9D; 
+            font-weight: bold; 
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,107,157,0.1);
+            border-radius: 10px;
+        }
+        button {
+            background: linear-gradient(45deg, #FF6B9D, #FF8E53);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Funish Games - Server Status</h1>
+        
+        <div class="status">✅ Frontend Working: HTML/CSS/JS loading correctly</div>
+        <div class="error">❌ Backend Not Working: Node.js server not running</div>
+        
+        <p style="color: white; margin: 20px 0;">
+            <strong>Issue:</strong> Hostinger is serving static files but not running your Node.js server.
+            This means Socket.io, lobby creation, and multiplayer features won't work.
+        </p>
+        
+        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h3 style="color: white; margin-top: 0;">🔧 What Needs to Be Fixed:</h3>
+            <ul style="color: rgba(255,255,255,0.9); text-align: left;">
+                <li>Configure Hostinger to run <code>node server.js</code></li>
+                <li>Ensure Node.js process manager is active</li>
+                <li>Check Hostinger deployment logs for errors</li>
+                <li>Verify PORT environment variable is set</li>
+            </ul>
+        </div>
+        
+        <button onclick="window.location.href='/'">🏠 Return to Main Page</button>
+    </div>
+</body>
+</html>
