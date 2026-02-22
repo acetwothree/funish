@@ -1,4 +1,8 @@
+console.log('App component is rendering');
+
 export default function App() {
+  console.log('App component function called');
+  
   return (
     <div style={{ 
       minHeight: '100vh', 
