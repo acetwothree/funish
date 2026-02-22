@@ -589,8 +589,8 @@ app.get('*', (req, res) => {
             
             if (isRuleMaker && submission.status === 'pending') {
               html += '<div style="display: flex; gap: 5px;">';
-              html += '<button onclick="reviewSubmission(\'' + submission.id + '\', \'accepted\')" style="width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✓</button>';
-              html += '<button onclick="reviewSubmission(\'' + submission.id + '\', \'rejected\')" style="width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;">✗</button>';
+              html += '<button onclick=\"reviewSubmission(\'' + submission.id + '\', \'accepted\')\" style=\"width: 40px; height: 40px; background: #4ECDC4; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;\">✓</button>';
+              html += '<button onclick=\"reviewSubmission(\'' + submission.id + '\', \'rejected\')\" style=\"width: 40px; height: 40px; background: #FF6B9D; border-radius: 8px; border: 2px solid black; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer;\">✗</button>';
               html += '</div>';
             } else {
               html += '<div style="display: flex; align-items: center; gap: 5px;">';
