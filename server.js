@@ -372,7 +372,7 @@ app.get('*', (req, res) => {
               .then(response => response.json())
               .then(lobby => {
                 const players = lobby.players || [];
-                const isHost = players[0]?.id === currentUserId;
+                const isHost = players[0] && players[0].id === currentUserId;
                 const isRuleMaker = gameState.ruleMaker === currentUserId;
                 
                 root.innerHTML = generateHiddenRuleGameHTML(gameState, players, currentUserId, isHost, isRuleMaker, lobbyCode);
@@ -396,7 +396,7 @@ app.get('*', (req, res) => {
             html += '<span style="color: white; font-size: 24px;">🛡️</span>';
             html += '<div style="text-align: center; color: white;">';
             html += '<p style="font-size: 10px; margin: 0; opacity: 0.8;">RULE MAKER</p>';
-            html += '<p style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">' + (ruleMaker?.username || '???') + '</p>';
+            html += '<p style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">' + (ruleMaker && ruleMaker.username ? ruleMaker.username : '???') + '</p>';
             html += '</div>';
             if (isRuleMaker) {
               html += '<div style="position: absolute; inset: 0; background: rgba(255,255,255,0.2); animation: pulse 2s infinite;"></div>';
@@ -515,7 +515,7 @@ app.get('*', (req, res) => {
             if (!gameState.rule) {
               let html = '<div style="text-align: center; color: #999; padding: 40px;">';
               html += '<div style="font-size: 48px; animation: spin 2s linear infinite;">🤫</div>';
-              html += '<p style="font-size: 14px; margin-top: 10px;">Waiting for ' + (ruleMaker?.username || '???') + ' to set a rule...</p>';
+              html += '<p style="font-size: 14px; margin-top: 10px;">Waiting for ' + (ruleMaker && ruleMaker.username ? ruleMaker.username : '???') + ' to set a rule...</p>';
               html += '</div>';
               return html;
             } else {
@@ -524,7 +524,7 @@ app.get('*', (req, res) => {
               
               if (gameState.hint) {
                 html += '<div style="background: rgba(78,205,196,0.2); padding: 15px; border-radius: 10px; border: 2px solid #4ECDC4; margin-bottom: 20px;">';
-                html += '<p style="font-size: 10px; color: #4ECDC4; margin-bottom: 5px;">💡 HINT FROM ' + (ruleMaker?.username || '???') + '</p>';
+                html += '<p style="font-size: 10px; color: #4ECDC4; margin-bottom: 5px;">💡 HINT FROM ' + (ruleMaker && ruleMaker.username ? ruleMaker.username : '???') + '</p>';
                 html += '<p style="font-size: 16px; font-weight: bold;">"' + gameState.hint + '" fits the rule!</p>';
                 html += '</div>';
               }
