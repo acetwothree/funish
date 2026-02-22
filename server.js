@@ -14,21 +14,21 @@ const distPath = path.join(__dirname, "dist");
 console.log('Port:', PORT);
 console.log('Dist path:', distPath);
 
-// Copy assets to root for Hostinger static serving
-const assetsPath = path.join(__dirname, 'assets');
-console.log('Copying assets to root for Hostinger static serving...');
-if (!fs.existsSync(assetsPath)) {
-  fs.mkdirSync(assetsPath, { recursive: true });
-}
+// Copy latest assets from dist/assets to public/assets on startup
+const publicAssetsPath = path.join(__dirname, 'public/assets');
 const distAssets = path.join(distPath, 'assets');
+console.log('Copying latest assets to public/assets...');
+if (!fs.existsSync(publicAssetsPath)) {
+  fs.mkdirSync(publicAssetsPath, { recursive: true });
+}
 if (fs.existsSync(distAssets)) {
   fs.readdirSync(distAssets).forEach(file => {
     const srcFile = path.join(distAssets, file);
-    const destFile = path.join(assetsPath, file);
+    const destFile = path.join(publicAssetsPath, file);
     fs.copyFileSync(srcFile, destFile);
-    console.log(`Copied ${file} to root`);
+    console.log(`Copied ${file} to public/assets`);
   });
-  console.log('Assets copied successfully');
+  console.log('Assets copied successfully to public/assets');
 } else {
   console.log('Dist assets folder not found!');
 }
