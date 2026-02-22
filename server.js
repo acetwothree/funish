@@ -380,7 +380,7 @@ app.get('*', (req, res) => {
               });
           }
           
-          // Generate Hidden Rule Game HTML (adapted from original React component)
+          // Generate Hidden Rule Game HTML (adapted from original React component) - Updated: 2025-02-22
           function generateHiddenRuleGameHTML(gameState, players, currentUserId, isHost, isRuleMaker, lobbyCode) {
             const ruleMaker = players.find(p => p.id === gameState.ruleMaker);
             const mySubmission = gameState.submissions.find(s => s.playerId === currentUserId && s.status === 'pending');
