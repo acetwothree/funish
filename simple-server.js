@@ -42,10 +42,12 @@ function generateCode() {
 
 // API Routes
 app.get('/api/health', (req, res) => {
+  console.log('Health check hit at:', new Date().toISOString());
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.get('/api/test', (req, res) => {
+  console.log('Test endpoint hit at:', new Date().toISOString());
   res.json({ 
     message: 'Simple server is working!', 
     path: req.path,
@@ -56,8 +58,12 @@ app.get('/api/test', (req, res) => {
 
 app.post('/api/create-lobby', express.json({type: '*/*'}), (req, res) => {
   try {
+    console.log('Create lobby request received at:', new Date().toISOString());
+    console.log('Request body:', req.body);
+    
     const { username } = req.body;
     if (!username) {
+      console.log('Error: Username required');
       return res.status(400).json({ error: 'Username required' });
     }
     
@@ -70,23 +76,28 @@ app.post('/api/create-lobby', express.json({type: '*/*'}), (req, res) => {
     
     lobbies.set(code, lobby);
     console.log('Created lobby:', code);
+    console.log('All lobbies:', Array.from(lobbies.keys()));
     
     res.json({ success: true, code });
   } catch (error) {
     console.error('Create lobby error:', error);
-    res.status(500).json({ error: 'Failed to create lobby' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to create lobby: ' + error.message });
   }
 });
 
 app.get('/api/lobby/:code', (req, res) => {
   try {
+    console.log('Get lobby request for code:', req.params.code);
     const { code } = req.params;
     const lobby = lobbies.get(code.toUpperCase());
     
     if (!lobby) {
+      console.log('Lobby not found:', code);
       return res.status(404).json({ error: 'Lobby not found' });
     }
     
+    console.log('Found lobby:', lobby);
     res.json(lobby);
   } catch (error) {
     console.error('Get lobby error:', error);
@@ -96,13 +107,18 @@ app.get('/api/lobby/:code', (req, res) => {
 
 app.post('/api/join-lobby', express.json({type: '*/*'}), (req, res) => {
   try {
+    console.log('Join lobby request received at:', new Date().toISOString());
+    console.log('Request body:', req.body);
+    
     const { code, username } = req.body;
     if (!code || !username) {
+      console.log('Error: Code and username required');
       return res.status(400).json({ error: 'Code and username required' });
     }
     
     const lobby = lobbies.get(code.toUpperCase());
     if (!lobby) {
+      console.log('Lobby not found:', code);
       return res.status(404).json({ error: 'Lobby not found' });
     }
     
@@ -111,11 +127,43 @@ app.post('/api/join-lobby', express.json({type: '*/*'}), (req, res) => {
     lobbies.set(code.toUpperCase(), lobby);
     
     console.log('Player joined lobby:', code, username);
+    console.log('Updated lobby:', lobby);
+    
     res.json({ success: true, lobby });
   } catch (error) {
     console.error('Join lobby error:', error);
-    res.status(500).json({ error: 'Failed to join lobby' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to join lobby: ' + error.message });
   }
+});
+
+// Root endpoint to verify server
+app.get('/', (req, res) => {
+  console.log('Root endpoint hit - SIMPLE SERVER is running!');
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Simple Server Test</title>
+      <meta charset="UTF-8">
+    </head>
+    <body style="font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0;">
+      <h1>🎮 Simple Server Running!</h1>
+      <p>✅ Express server is active</p>
+      <p>✅ API endpoints are working</p>
+      <p>✅ No Socket.io dependencies</p>
+      <p><a href="/api/test" style="color: #007bff;">Test API</a></p>
+      <p><a href="/api/health" style="color: #28a745;">Health Check</a></p>
+      <hr>
+      <p><strong>Server Info:</strong></p>
+      <ul>
+        <li>Port: ${PORT}</li>
+        <li>Time: ${new Date().toISOString()}</li>
+        <li>Process: Simple Server (no Socket.io)</li>
+      </ul>
+    </body>
+    </html>
+  `);
 });
 
 // Serve static files from build output
